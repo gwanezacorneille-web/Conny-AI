@@ -18,15 +18,26 @@ def load_memory():
     if os.path.exists(MEMORY_FILE):
 
         with open(MEMORY_FILE, "r") as file:
-            return json.load(file)
+            memory = json.load(file)
+
+
+        # Repair missing categories
+        for category in DEFAULT_MEMORY:
+
+            if category not in memory:
+                memory[category] = []
+
+
+        save_memory(memory)
+
+        return memory
+
 
     else:
 
         save_memory(DEFAULT_MEMORY)
 
         return DEFAULT_MEMORY
-
-
 
 def save_memory(memory):
 

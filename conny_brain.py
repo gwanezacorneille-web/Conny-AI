@@ -1,4 +1,6 @@
 from conny_responses import RESPONSES
+from conny_network import is_online
+from conny_online import search_online
 import datetime
 from conny_calculator import calculate
 from conny_memory import remember, get_memory, forget
@@ -49,6 +51,77 @@ def get_response(user_input):
 
     if "help" in text or "what can you do" in text:
         return RESPONSES["help"]
+
+
+    # Memory save
+
+    if text.startswith("remember "):
+
+        fact = text.replace(
+            "remember ",
+            "",
+            1
+        ).strip()
+
+
+        category = "knowledge"
+
+
+        if "my name" in fact:
+            category = "personal"
+
+        elif "i like" in fact or "i love" in fact:
+            category = "interests"
+
+        elif "project" in fact or "conny" in fact:
+            category = "projects"
+
+
+        remember(
+            fact,
+            category
+        )
+
+
+        return "I will remember that. 🧠"
+
+
+
+    # Show memory
+
+    if "what do you remember" in text or "show my memories" in text:
+
+        memories = get_memory()
+
+
+        if memories:
+
+            return (
+                "🧠 My memories:\n\n"
+                + "\n".join(memories)
+            )
+
+        else:
+
+            return "I don't remember anything yet."
+
+
+
+    # Forget memory
+
+    if text.startswith("forget "):
+
+        fact = text.replace(
+            "forget ",
+            "",
+            1
+        ).strip()
+
+
+        forget(fact)
+
+
+        return "Memory removed. 🗑️"
 
 
 
@@ -103,11 +176,22 @@ def get_response(user_input):
             return RESPONSES[key]
 
 
+    # Online search
+
+    if is_online():
+
+        online_answer = search_online(text)
+
+        if online_answer not in (
+            "I couldn't find a good answer online.",
+            "I couldn't connect to the online knowledge service."
+        ):
+            return "🌐 Online Result:\n\n" + online_answer
+
 
     # Unknown
 
     return (
         "I am still learning, Corneille 🤖\n"
-        "Try asking another question, "
-        "and I will continue improving."
+        "If I'm connected to the internet, I can also search online for newer information."
     )

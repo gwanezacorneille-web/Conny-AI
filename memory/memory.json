@@ -1,5 +1,11 @@
 {
-    "facts": [
-        "that i study electronics and telecommunication"
+    "personal": [
+        "my name is corneille"
+    ],
+    "interests": [],
+    "projects": [],
+    "knowledge": [
+        "i like linux",
+        "my name is congwe"
     ]
 }
