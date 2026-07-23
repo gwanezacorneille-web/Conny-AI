@@ -41,8 +41,13 @@ class ConnyGUI:
 
         self.chat.insert(
             tk.END,
-            "CONNY AI v1.3.1\n"
-            "System ready...\n\n"
+            "================================================\n"
+            "🤖 CONNY AI v1.3.3\n\n"
+            "From a small idea to a global intelligence.\n\n"
+            "Created by:\n"
+            "Gwaneza Corneille Karenzi\n\n"
+            "Status: 🟢 Online\n"
+            "================================================\n\n"
         )
 
 
@@ -112,12 +117,12 @@ class ConnyGUI:
             response = get_response(user)
 
 
-
         self.chat.insert(
             tk.END,
-            "Conny: " + response + "\n\n"
+            "Conny AI: " + response + "\n\n"
         )
 
+        self.chat.see(tk.END)
 
         self.entry.delete(0, tk.END)
 
