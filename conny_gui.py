@@ -11,7 +11,7 @@ class ConnyGUI:
 
         self.root = root
 
-        self.root.title("CONNY AI v1.4")
+        self.root.title("CONNY AI v1.8")
         self.root.geometry("700x600")
         self.root.resizable(False, False)
 
@@ -75,14 +75,18 @@ class ConnyGUI:
         self.chat.insert(
             tk.END,
             "================================================\n"
-            "🤖 CONNY AI v1.4\n\n"
+            "🤖 CONNY AI v1.8\n\n"
             "From a small idea to a global intelligence.\n\n"
             "Created by:\n"
             "Gwaneza Corneille Karenzi\n\n"
-            "Status: 🟢 Online\n"
+            "Status: 🟢 Online\n\n"
+            "Features:\n"
+            "🧠 Memory\n"
+            "🧮 Calculator\n"
+            "🌐 Online Knowledge\n"
+            "💬 Smart Conversation\n"
             "================================================\n\n"
         )
-
 
         # Input area
 
