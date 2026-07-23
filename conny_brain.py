@@ -1,43 +1,47 @@
 from modules.memory_manager import handle_memory
 from modules.calculator import handle_calculation
-from modules.context_manager import update_context
 from modules.conversation import handle_conversation
 from modules.online_search import handle_online
+from modules.context_manager import update_context
+from modules.intent_analyzer import detect_intent
 
 
 def get_response(user_input):
 
     text = user_input.lower().strip()
 
+    intent = detect_intent(text)
 
-    modules = [
-        handle_memory,
-        handle_calculation,
-        handle_conversation,
-        handle_online
-    ]
+    try:
 
+        if intent == "memory":
 
-    for module in modules:
+            response = handle_memory(text)
 
-        try:
+        elif intent == "calculator":
 
-            response = module(text)
+            response = handle_calculation(text)
 
-            if response:
+        elif intent == "online":
 
-                update_context(
-                    text,
-                    response
-                )
+            response = handle_online(text)
 
-                return response
+        else:
 
+            response = handle_conversation(text)
 
-        except Exception as error:
+        if response:
 
-            print("Module error:", error)
+            update_context(
+                text,
+                response
+            )
 
+            return response
+
+    except Exception as error:
+
+        print("Module error:", error)
 
     return (
         "I am still learning, Corneille 🤖\n"

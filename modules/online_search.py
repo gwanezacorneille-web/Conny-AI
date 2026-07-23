@@ -1,5 +1,5 @@
 from conny_network import is_online
-from conny_online import search_online
+from modules.search_manager import search_knowledge
 
 
 def handle_online(text):
@@ -7,13 +7,10 @@ def handle_online(text):
     if not is_online():
         return None
 
+    answer = search_knowledge(text)
 
-    answer = search_online(text)
-
-
-    if answer.startswith("I couldn't"):
+    if not answer:
         return None
-
 
     return (
         "🌐 Online Result:\n\n"
