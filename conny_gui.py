@@ -1,5 +1,6 @@
 import tkinter as tk
 from PIL import Image, ImageTk
+
 from conny_brain import get_response
 from conny_memory import remember, get_memory
 
@@ -10,15 +11,15 @@ class ConnyGUI:
 
         self.root = root
 
-        self.root.title("CONNY AI v1.3.1")
+        self.root.title("CONNY AI v1.4")
         self.root.geometry("700x600")
         self.root.resizable(False, False)
 
 
-        # Header
+        # Logo
 
         self.logo = Image.open("assets/conny_logo.png")
-        self.logo = self.logo.resize((80,80))
+        self.logo = self.logo.resize((80, 80))
 
         self.logo_image = ImageTk.PhotoImage(self.logo)
 
@@ -30,41 +31,57 @@ class ConnyGUI:
         self.logo_label.pack()
 
 
- 
+        # Header
+
         self.header = tk.Label(
             root,
-            text="CONNY AI 🤖\nFrom a small idea to a global intelligence.\nCreated by Gwaneza Corneille Karenzi",
+            text="CONNY AI 🤖\n"
+                 "From a small idea to a global intelligence.\n"
+                 "Created by Gwaneza Corneille Karenzi",
             font=("Arial", 14, "bold")
         )
 
         self.header.pack(pady=10)
 
 
-
-        # Chat box
+        # Chat area
 
         self.chat = tk.Text(
             root,
             height=25,
             width=75,
-            font=("Arial", 11)
+            font=("Arial", 11),
+            wrap=tk.WORD
         )
 
         self.chat.pack(padx=10)
 
 
+        # Chat styles
+
+        self.chat.tag_config(
+            "user",
+            font=("Arial", 11, "bold")
+        )
+
+        self.chat.tag_config(
+            "conny",
+            font=("Arial", 11, "bold")
+        )
+
+
+        # Welcome message
 
         self.chat.insert(
             tk.END,
             "================================================\n"
-            "🤖 CONNY AI v1.3.3\n\n"
+            "🤖 CONNY AI v1.4\n\n"
             "From a small idea to a global intelligence.\n\n"
             "Created by:\n"
             "Gwaneza Corneille Karenzi\n\n"
             "Status: 🟢 Online\n"
             "================================================\n\n"
         )
-
 
 
         # Input area
@@ -82,8 +99,15 @@ class ConnyGUI:
         )
 
 
-        self.entry.bind("<Return>", lambda event: self.send())
+        # Enter key support
 
+        self.entry.bind(
+            "<Return>",
+            lambda event: self.send()
+        )
+
+
+        # Send button
 
         self.button = tk.Button(
             root,
@@ -98,7 +122,6 @@ class ConnyGUI:
         )
 
 
-
     def send(self):
 
         user = self.entry.get().lower().strip()
@@ -108,15 +131,29 @@ class ConnyGUI:
             return
 
 
+        # User message
+
         self.chat.insert(
             tk.END,
-            "You: " + user + "\n"
+            "👤 You:\n",
+            "user"
+        )
+
+        self.chat.insert(
+            tk.END,
+            user + "\n\n"
         )
 
 
+        # Memory system
+
         if user.startswith("remember "):
 
-            fact = user.replace("remember ", "", 1)
+            fact = user.replace(
+                "remember ",
+                "",
+                1
+            )
 
             remember(fact)
 
@@ -127,7 +164,10 @@ class ConnyGUI:
 
             facts = get_memory()
 
-            response = "\n".join(facts)
+            if facts:
+                response = "\n".join(facts)
+            else:
+                response = "I don't remember anything yet."
 
 
         else:
@@ -135,14 +175,26 @@ class ConnyGUI:
             response = get_response(user)
 
 
+        # Conny response
+
         self.chat.insert(
             tk.END,
-            "Conny AI: " + response + "\n\n"
+            "🤖 Conny AI:\n",
+            "conny"
         )
+
+        self.chat.insert(
+            tk.END,
+            response + "\n\n"
+        )
+
 
         self.chat.see(tk.END)
 
-        self.entry.delete(0, tk.END)
+        self.entry.delete(
+            0,
+            tk.END
+        )
 
 
 
