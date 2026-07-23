@@ -1,0 +1,61 @@
+from conny_brain import get_response
+from conny_network import is_online
+import time
+from conny_memory import remember, get_memory
+
+print("=" * 55)
+print("                 CONNY AI")
+print("  From a small idea to a global intelligence.")
+print()
+print("  Created by Gwaneza Corneille Karenzi")
+print("=" * 55)
+
+print("\nChecking system...")
+time.sleep(1)
+
+print("Checking network...")
+time.sleep(1)
+
+ONLINE = is_online()
+
+if ONLINE:
+    print("\nStatus : 🟢 ONLINE")
+else:
+    print("\nStatus : 🔴 OFFLINE")
+
+name = input("\nWhat is your name? ")
+
+print(f"\nWelcome {name}!")
+print("Type 'bye' to exit.\n")
+
+while True:
+
+    user = input(f"{name}: ")
+if user.startswith("remember "):
+
+    fact = user.replace("remember ", "")
+
+    remember(fact)
+
+    print("\nConny AI: I will remember that.")
+    continue
+
+
+if "what do you remember" in user:
+
+    facts = get_memory()
+
+    print("\nConny AI: I remember:")
+
+    for fact in facts:
+        print("-", fact)
+
+    continue
+
+    answer = get_response(user)
+
+    if answer == "EXIT":
+        print(f"\nConny AI: Goodbye {name}! 👋")
+        break
+
+    print(f"\nConny AI: {answer}")
