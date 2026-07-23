@@ -6,43 +6,42 @@ def handle_context(text):
     context = get_context()
 
     topic = context.get(
-        "last_topic",
+        "topic",
         ""
     )
 
-    response = context.get(
-        "last_response",
+    answer = context.get(
+        "answer",
         ""
     )
 
 
-    if not topic or not response:
+    if not topic or not answer:
         return None
 
 
-
-    follow_words = [
-        "when",
-        "where",
-        "who",
-        "why",
-        "how old",
+    follow_phrases = [
         "tell me more",
-        "more"
+        "more",
+        "explain",
+        "continue",
+        "go deeper"
     ]
 
 
-    for word in follow_words:
+    for phrase in follow_phrases:
 
-        if text == word or word in text:
+        if text == phrase:
 
-            if "Based on our previous topic" in response:
+            if answer.startswith(
+                "🧠 Continuing from our previous topic:"
+            ):
                 return None
 
 
             return (
-                "Based on our previous topic:\n\n"
-                + response
+                "🧠 Continuing from our previous topic:\n\n"
+                + answer
             )
 
 

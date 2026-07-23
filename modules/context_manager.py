@@ -5,6 +5,14 @@ import os
 CONTEXT_FILE = "memory/context.json"
 
 
+DEFAULT_CONTEXT = {
+    "topic": "",
+    "category": "",
+    "question": "",
+    "answer": ""
+}
+
+
 def load_context():
 
     if os.path.exists(CONTEXT_FILE):
@@ -12,14 +20,16 @@ def load_context():
         with open(CONTEXT_FILE, "r") as file:
             return json.load(file)
 
-    return {
-        "last_topic": "",
-        "last_response": ""
-    }
+    return DEFAULT_CONTEXT
 
 
 
 def save_context(context):
+
+    os.makedirs(
+        "memory",
+        exist_ok=True
+    )
 
     with open(CONTEXT_FILE, "w") as file:
 
@@ -31,11 +41,13 @@ def save_context(context):
 
 
 
-def update_context(topic, response):
+def update_context(question, answer):
 
     context = {
-        "last_topic": topic,
-        "last_response": response
+        "topic": question,
+        "category": "general",
+        "question": question,
+        "answer": answer
     }
 
     save_context(context)
