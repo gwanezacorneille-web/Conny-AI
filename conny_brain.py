@@ -9,6 +9,7 @@ def get_response(user_input):
 
 
     # Goodbye detection
+
     goodbye_words = [
         "bye",
         "goodbye",
@@ -20,60 +21,92 @@ def get_response(user_input):
         "quit"
     ]
 
-    if text in goodbye_words:
-        return "EXIT"
+    for word in goodbye_words:
+        if word in text:
+            return "EXIT"
+
 
 
     # Greetings
+
     greetings = [
         "hello",
         "hi",
         "hey",
         "good morning",
-        "good evening"
+        "good evening",
+        "good afternoon"
     ]
 
-    if text in greetings:
-        return RESPONSES["hello"]
+    for greeting in greetings:
+        if greeting in text:
+            return RESPONSES["hello"]
+
+
+
+    # Help command
+
+    if "help" in text or "what can you do" in text:
+        return RESPONSES["help"]
+
 
 
     # Calculator
+
     if "calculate" in text:
 
-        expression = text.replace("calculate", "").strip()
+        expression = text.replace(
+            "calculate",
+            ""
+        ).strip()
 
         return calculate(expression)
 
 
+
     # Time
+
     if "time" in text:
+
         return datetime.datetime.now().strftime(
             "The current time is %H:%M:%S"
         )
 
 
+
     # Date
+
     if "date" in text:
-        return str(datetime.date.today())
 
-
-    # Study questions
-    if "study" in text or "studying" in text:
         return (
-            "I like learning technology, programming, "
-            "electronics, networking and artificial intelligence."
+            "Today's date is "
+            + str(datetime.date.today())
         )
 
 
+
+    # Study
+
+    if "study" in text or "studying" in text:
+
+        return RESPONSES["study"]
+
+
+
     # Search known responses
+
     for key in RESPONSES:
 
         if key in text:
+
             return RESPONSES[key]
 
 
+
     # Unknown
+
     return (
-        "I am still learning.\n"
-        "Every great intelligence starts by learning."
+        "I am still learning, Corneille 🤖\n"
+        "Try asking another question, "
+        "and I will continue improving."
     )
