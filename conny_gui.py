@@ -1,4 +1,5 @@
 import tkinter as tk
+from PIL import Image, ImageTk
 from conny_brain import get_response
 from conny_memory import remember, get_memory
 
@@ -16,6 +17,20 @@ class ConnyGUI:
 
         # Header
 
+        self.logo = Image.open("assets/conny_logo.png")
+        self.logo = self.logo.resize((80,80))
+
+        self.logo_image = ImageTk.PhotoImage(self.logo)
+
+        self.logo_label = tk.Label(
+            root,
+            image=self.logo_image
+        )
+
+        self.logo_label.pack()
+
+
+ 
         self.header = tk.Label(
             root,
             text="CONNY AI 🤖\nFrom a small idea to a global intelligence.\nCreated by Gwaneza Corneille Karenzi",
