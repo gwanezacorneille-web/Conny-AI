@@ -34,6 +34,22 @@ def detect_intent(text):
     if text in greetings:
         return "conversation"
 
+    # Personal profile questions
+
+    profile_questions = [
+        "who am i",
+        "what is my profile",
+        "what is my name",
+        "what do you know about me"
+    ]
+
+
+    for question in profile_questions:
+
+        if question in text:
+
+            return "memory"
+
 
     # Online knowledge
     question_words = [
