@@ -82,6 +82,9 @@ class ConnyGUI:
         )
 
 
+        self.entry.bind("<Return>", lambda event: self.send())
+
+
         self.button = tk.Button(
             root,
             text="Send",
