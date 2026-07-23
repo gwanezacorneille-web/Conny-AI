@@ -1,6 +1,7 @@
 from conny_responses import RESPONSES
 import datetime
 from conny_calculator import calculate
+from conny_memory import remember, get_memory, forget
 
 
 def get_response(user_input):
