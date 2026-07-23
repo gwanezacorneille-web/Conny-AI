@@ -1,5 +1,6 @@
 from conny_responses import RESPONSES
 import datetime
+from conny_calculator import calculate
 
 
 def get_response(user_input):
@@ -34,6 +35,14 @@ def get_response(user_input):
 
     if text in greetings:
         return RESPONSES["hello"]
+
+
+    # Calculator
+    if "calculate" in text:
+
+        expression = text.replace("calculate", "").strip()
+
+        return calculate(expression)
 
 
     # Time
