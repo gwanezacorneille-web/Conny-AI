@@ -1,5 +1,6 @@
 from modules.memory_manager import handle_memory
 from modules.calculator import handle_calculation
+from modules.context_manager import update_context
 from modules.conversation import handle_conversation
 from modules.online_search import handle_online
 
@@ -24,12 +25,18 @@ def get_response(user_input):
             response = module(text)
 
             if response:
+
+                update_context(
+                    text,
+                    response
+                )
+
                 return response
+
 
         except Exception as error:
 
             print("Module error:", error)
-
 
 
     return (
