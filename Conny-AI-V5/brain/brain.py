@@ -3,10 +3,16 @@ from brain.conversation import Conversation
 from brain.personality import Personality
 from brain.reasoning import Reasoning
 from brain.intent_router import IntentRouter
+
 from memory.memory import Memory
+
+from plugins.plugin_manager import PluginManager
+from plugins.calculator_plugin import CalculatorPlugin
+
 
 
 class Brain:
+
 
     def __init__(self):
 
@@ -23,7 +29,18 @@ class Brain:
         self.router = IntentRouter()
 
 
+        # Plugin System
+
+        self.plugins = PluginManager()
+
+        self.plugins.register(
+            CalculatorPlugin()
+        )
+
+
+
     def process(self, message):
+
 
         self.conversation.add(
             "User",
@@ -31,11 +48,39 @@ class Brain:
         )
 
 
-        intent = self.router.detect(message)
+        # Check plugins first
+
+        plugin = self.plugins.find_plugin(
+            message
+        )
 
 
-        # Remember information
+        if plugin:
+
+
+            answer = plugin.run(
+                message
+            )
+
+
+            self.conversation.add(
+                "Conny",
+                answer
+            )
+
+
+            return answer
+
+
+
+        intent = self.router.detect(
+            message
+        )
+
+
+
         if intent == "remember":
+
 
             information = message.lower().replace(
                 "remember",
@@ -44,46 +89,26 @@ class Brain:
             ).strip()
 
 
-            # Remember name
-            if "my name is" in information:
 
-                name = information.replace(
-                    "my name is",
-                    ""
-                ).strip()
-
-
-                self.memory.remember(
-                    "personal",
-                    "name",
-                    name
-                )
+            self.memory.remember(
+                "fact",
+                "general",
+                information
+            )
 
 
-                answer = (
-                    f"I will remember that your name is {name}."
-                )
+            answer = "I will remember that."
 
 
-            else:
 
-                self.memory.remember(
-                    "fact",
-                    "general",
-                    information
-                )
-
-
-                answer = "I will remember that."
-
-
-        # Favourite language
         elif intent == "favorite_language":
+
 
             language = message.lower().split(
                 "is",
                 1
             )[1].strip()
+
 
 
             self.memory.remember(
@@ -94,18 +119,21 @@ class Brain:
 
 
             answer = (
-                f"I will remember that your favorite language is {language}."
+                f"I will remember that your "
+                f"favorite language is {language}."
             )
 
 
-        # Study
+
         elif intent == "study":
+
 
             subject = message.lower().replace(
                 "i study",
                 "",
                 1
             ).strip()
+
 
 
             self.memory.remember(
@@ -120,29 +148,26 @@ class Brain:
             )
 
 
-        # Recall memory
+
         elif intent == "recall":
+
 
             memories = self.memory.recall()
 
 
-            if memories:
-
-                answer = "I remember:\n"
-
-                for item in memories:
-
-                    answer += (
-                        f"- {item[1]}: {item[2]}\n"
-                    )
-
-            else:
-
-                answer = "I don't remember anything yet."
+            answer = "I remember:\n"
 
 
-        # Identity
+            for item in memories:
+
+                answer += (
+                    f"- {item[1]}: {item[2]}\n"
+                )
+
+
+
         elif intent == "identity":
+
 
             answer = (
                 "I am Conny AI V5.0, "
@@ -150,16 +175,19 @@ class Brain:
             )
 
 
-        # Greeting
+
         elif intent == "greeting":
+
 
             answer = self.response.greeting()
 
 
-        # Unknown
+
         else:
 
+
             answer = self.response.unknown_response()
+
 
 
         self.conversation.add(
