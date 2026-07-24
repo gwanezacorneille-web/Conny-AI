@@ -7,7 +7,7 @@ from brain.intent_router import IntentRouter
 from memory.memory import Memory
 
 from plugins.plugin_manager import PluginManager
-from plugins.calculator_plugin import CalculatorPlugin
+from plugins.plugin_loader import PluginLoader
 
 
 
@@ -33,9 +33,17 @@ class Brain:
 
         self.plugins = PluginManager()
 
-        self.plugins.register(
-            CalculatorPlugin()
-        )
+        self.loader = PluginLoader()
+
+
+        loaded_plugins = self.loader.load_plugins()
+
+
+        for plugin in loaded_plugins:
+
+            self.plugins.register(
+                plugin
+            )
 
 
 
@@ -89,7 +97,6 @@ class Brain:
             ).strip()
 
 
-
             self.memory.remember(
                 "fact",
                 "general",
@@ -108,7 +115,6 @@ class Brain:
                 "is",
                 1
             )[1].strip()
-
 
 
             self.memory.remember(
@@ -133,7 +139,6 @@ class Brain:
                 "",
                 1
             ).strip()
-
 
 
             self.memory.remember(
