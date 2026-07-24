@@ -24,7 +24,9 @@ class Database:
 
             category TEXT,
 
-            information TEXT
+            key TEXT,
+
+            value TEXT
 
         )
         """)
@@ -32,21 +34,27 @@ class Database:
         self.connection.commit()
 
 
-    def save_memory(self, category, information):
+
+    def save_memory(self, category, key, value):
 
         cursor = self.connection.cursor()
 
         cursor.execute(
             """
             INSERT INTO memories
-            (category, information)
+            (category, key, value)
 
-            VALUES (?, ?)
+            VALUES (?, ?, ?)
             """,
-            (category, information)
+            (
+                category,
+                key,
+                value
+            )
         )
 
         self.connection.commit()
+
 
 
     def get_memories(self):
@@ -54,7 +62,10 @@ class Database:
         cursor = self.connection.cursor()
 
         cursor.execute(
-            "SELECT category, information FROM memories"
+            """
+            SELECT category, key, value
+            FROM memories
+            """
         )
 
         return cursor.fetchall()

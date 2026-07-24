@@ -2,21 +2,22 @@ from database.database import Database
 
 
 class Memory:
-    """
-    Handles Conny's long-term memory.
-    """
+
 
     def __init__(self):
 
         self.database = Database()
 
 
-    def remember(self, information):
+
+    def remember(self, category, key, value):
 
         self.database.save_memory(
-            "fact",
-            information
+            category,
+            key,
+            value
         )
+
 
 
     def recall(self):
