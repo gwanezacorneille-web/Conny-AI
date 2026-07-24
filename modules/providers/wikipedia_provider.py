@@ -2,17 +2,16 @@ import requests
 
 
 HEADERS = {
-    "User-Agent": (
-        "CONNY-AI/3.3 "
-        "(https://github.com/yourusername/conny-ai; "
-        "contact: example@example.com)"
-    )
+    "User-Agent": "CONNY-AI/4.0 (Created by Gwaneza Corneille Karenzi)"
 }
 
 
-def search_wikipedia(query):
+def search(query):
 
-    url = "https://en.wikipedia.org/api/rest_v1/page/summary/" + query.replace(" ", "_")
+    url = (
+        "https://en.wikipedia.org/api/rest_v1/page/summary/"
+        + query.replace(" ", "_")
+    )
 
     try:
 

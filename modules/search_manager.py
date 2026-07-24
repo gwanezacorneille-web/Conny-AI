@@ -1,29 +1,54 @@
-from conny_online import search_online
-from modules.wikipedia_search import search_wikipedia
+from modules.providers.wikipedia_provider import search as wiki_search
+from modules.providers.duckduckgo_provider import search as duck_search
+from modules.question_analyzer import analyze_question
+from modules.answer_formatter import format_answer
 
 
+def search_knowledge(query):
 
-def search_knowledge(question):
+    analysis = analyze_question(query)
 
+    question_type = analysis.get(
+        "type",
+        "general"
+    )
 
-    # Try Wikipedia first
+    subject = analysis.get(
+        "subject",
+        query
+    )
 
-    answer = search_wikipedia(question)
+    providers = [
 
-    if answer:
+        wiki_search,
 
-        return answer
+        duck_search
 
+    ]
 
+    for provider in providers:
 
-    # Try DuckDuckGo
+        try:
 
-    answer = search_online(question)
+            answer = provider(subject)
 
+            if answer:
 
-    if answer.startswith("I couldn't"):
+                formatted = format_answer(
+                    question_type,
+                    answer
+                )
 
-        return None
+                if formatted:
+                    return formatted
 
+                return answer
 
-    return answer
+        except Exception as error:
+
+            print(
+                "Search error:",
+                error
+            )
+
+    return None

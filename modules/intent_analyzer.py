@@ -3,66 +3,81 @@ def detect_intent(text):
     text = text.lower().strip()
 
 
+    # -------------------------
     # Memory
+    # -------------------------
+
     if text.startswith("remember "):
         return "memory"
-
-
-    if "what do you remember" in text:
-        return "memory"
-
 
     if text.startswith("forget "):
         return "memory"
 
+    if (
+        "what do you remember" in text
+        or "show my memories" in text
+        or "who am i" in text
+        or "what is my profile" in text
+        or "what is my name" in text
+        or "what do you know about me" in text
+    ):
+        return "memory"
 
+
+    # -------------------------
     # Calculator
+    # -------------------------
+
     if text.startswith("calculate "):
         return "calculator"
 
 
+    # -------------------------
+    # Online Knowledge
+    # -------------------------
+
+    online_patterns = [
+
+        "who",
+        "what",
+        "when",
+        "where",
+        "why",
+        "how",
+
+        "tell me about",
+        "define",
+        "search",
+        "search for",
+        "information about",
+        "explain"
+
+    ]
+
+
+    for pattern in online_patterns:
+
+        if text.startswith(pattern):
+            return "online"
+
+
+    # -------------------------
     # Conversation
+    # -------------------------
+
     greetings = [
+
         "hello",
         "hi",
         "hey",
         "good morning",
         "good afternoon",
         "good evening"
+
     ]
 
     if text in greetings:
         return "conversation"
-
-    # Personal profile questions
-
-    profile_questions = [
-        "who am i",
-        "what is my profile",
-        "what is my name",
-        "what do you know about me"
-    ]
-
-
-    for question in profile_questions:
-
-        if question in text:
-
-            return "memory"
-
-
-    # Online knowledge
-    question_words = [
-        "who",
-        "what",
-        "when",
-        "where",
-        "why",
-        "how"
-    ]
-
-    if any(text.startswith(word + " ") for word in question_words):
-        return "online"
 
 
     return "conversation"
