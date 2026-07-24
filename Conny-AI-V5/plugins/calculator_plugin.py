@@ -3,24 +3,27 @@ class CalculatorPlugin:
 
     def can_handle(self, message):
 
-        message = message.lower()
+        text = message.lower()
 
 
-        keywords = [
-            "calculate",
-            "what is",
+        if "calculate" in text:
+
+            return True
+
+
+        if any(symbol in text for symbol in [
             "+",
             "-",
             "*",
             "/"
-        ]
+        ]):
 
+            numbers = any(
+                char.isdigit()
+                for char in text
+            )
 
-        for word in keywords:
-
-            if word in message:
-
-                return True
+            return numbers
 
 
         return False
@@ -40,10 +43,7 @@ class CalculatorPlugin:
             )
 
 
-            expression = expression.replace(
-                "what is",
-                ""
-            )
+            expression = expression.strip()
 
 
             result = eval(expression)
