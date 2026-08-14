@@ -1,0 +1,419 @@
+class DecisionEngine:
+    """
+    CONNY AI Decision Engine V3
+
+    Responsible for:
+
+    - detecting possible intents
+    - scoring intents
+    - applying priority rules
+    - selecting the strongest decision
+    - providing confidence information
+    """
+
+    def __init__(self):
+
+        self.intents = {
+
+            # ==========================================
+            # CONVERSATION
+            # ==========================================
+
+            "conversation": [
+                "hi",
+                "hello",
+                "hey",
+                "how are you",
+                "who are you",
+                "your name",
+                "thank you",
+                "thanks",
+                "bye",
+                "good morning",
+                "good afternoon",
+                "good evening",
+                "good night"
+            ],
+
+            # ==========================================
+            # EMOTIONAL SUPPORT
+            # ==========================================
+
+            "emotional_support": [
+                "happy",
+                "sad",
+                "angry",
+                "worried",
+                "scared",
+                "afraid",
+                "stress",
+                "stressed",
+                "exam",
+                "tired",
+                "lonely",
+                "excited",
+                "love",
+                "frustrated",
+                "nervous"
+            ],
+
+            # ==========================================
+            # MEMORY STORE
+            # ==========================================
+
+            "memory_store": [
+                "remember",
+                "save this",
+                "store this",
+                "my favorite",
+                "my name is",
+                "i like",
+                "i love",
+                "don't forget"
+            ],
+
+            # ==========================================
+            # MEMORY RECALL
+            # ==========================================
+
+            "memory_recall": [
+                "what do you remember",
+                "show memories",
+                "what do you know about me",
+                "tell me about myself",
+                "what did i tell you",
+                "do you remember"
+            ],
+
+            # ==========================================
+            # CALCULATOR
+            # ==========================================
+
+            "calculator": [
+                "calculate",
+                "solve",
+                "plus",
+                "minus",
+                "multiply",
+                "divide",
+                "equation",
+                "percentage",
+                "percent",
+                "square root"
+            ],
+
+            # ==========================================
+            # COMPARISON
+            # ==========================================
+
+            "comparison": [
+                "compare",
+                "difference between",
+                " vs ",
+                "versus",
+                "better than",
+                "which is better",
+                "difference"
+            ],
+
+            # ==========================================
+            # CODING
+            # ==========================================
+
+            "coding": [
+                "python",
+                "java",
+                "javascript",
+                "html",
+                "css",
+                "code",
+                "program",
+                "programming",
+                "bug",
+                "error",
+                "function",
+                "class",
+                "script",
+                "debug",
+                "syntax"
+            ],
+
+            # ==========================================
+            # CREATIVE
+            # ==========================================
+
+            "creative": [
+                "write",
+                "create",
+                "story",
+                "poem",
+                "design",
+                "idea",
+                "generate",
+                "caption",
+                "message",
+                "letter"
+            ],
+
+            # ==========================================
+            # SYSTEM
+            # ==========================================
+
+            "system": [
+                "open",
+                "launch",
+                "install",
+                "remove",
+                "run",
+                "terminal",
+                "command",
+                "shutdown",
+                "restart",
+                "file",
+                "folder"
+            ],
+
+            # ==========================================
+            # INTERNET
+            # ==========================================
+
+            "internet": [
+                "latest",
+                "today",
+                "current",
+                "news",
+                "weather",
+                "price",
+                "score",
+                "online",
+                "search",
+                "internet"
+            ],
+
+            # ==========================================
+            # KNOWLEDGE
+            # ==========================================
+
+            "knowledge": [
+                "what is",
+                "who is",
+                "why",
+                "how",
+                "explain",
+                "define",
+                "meaning",
+                "tell me about",
+                "what does",
+                "how does"
+            ]
+        }
+
+        # Higher number = stronger priority
+        self.priority = {
+
+            "memory_store": 100,
+            "memory_recall": 95,
+            "comparison": 90,
+            "calculator": 85,
+            "system": 80,
+            "coding": 75,
+            "internet": 70,
+            "creative": 65,
+            "emotional_support": 60,
+            "knowledge": 50,
+            "conversation": 40
+        }
+
+        self.last_scores = {}
+        self.last_decision = None
+        self.last_confidence = 0
+
+    # ======================================================
+    # CHOOSE DECISION
+    # ======================================================
+
+    def choose(self, message):
+
+        text = message.lower().strip()
+
+        if not text:
+            self.last_decision = "conversation"
+            self.last_confidence = 1
+
+            return "conversation"
+
+        # ==============================================
+        # Exact conversation commands
+        # ==============================================
+
+        if text in (
+            "hi",
+            "hello",
+            "hey",
+            "thanks",
+            "thank you",
+            "bye"
+        ):
+
+            self.last_decision = "conversation"
+            self.last_confidence = 1
+
+            return "conversation"
+
+        # ==============================================
+        # Priority rules
+        # ==============================================
+
+        # Memory store
+        if text.startswith((
+            "remember ",
+            "save ",
+            "store ",
+            "don't forget "
+        )):
+
+            return self._set_result(
+                "memory_store",
+                1
+            )
+
+        # Memory recall
+        if (
+            "what do you remember" in text
+            or "show memories" in text
+            or "what did i tell you" in text
+            or "do you remember" in text
+        ):
+
+            return self._set_result(
+                "memory_recall",
+                1
+            )
+
+        # Comparison
+        if (
+            " vs " in text
+            or " versus " in text
+            or "compare " in text
+            or text.startswith("compare")
+        ):
+
+            return self._set_result(
+                "comparison",
+                1
+            )
+
+        # ==============================================
+        # Calculate scores
+        # ==============================================
+
+        scores = {}
+
+        for intent, keywords in self.intents.items():
+
+            score = 0
+
+            for keyword in keywords:
+
+                if keyword in text:
+                    score += 1
+
+            scores[intent] = score
+
+        self.last_scores = scores
+
+        # ==============================================
+        # Find best score
+        # ==============================================
+
+        best_score = max(scores.values())
+
+        candidates = [
+            intent
+            for intent, score in scores.items()
+            if score == best_score
+        ]
+
+        # ==============================================
+        # No match
+        # ==============================================
+
+        if best_score == 0:
+
+            return self._set_result(
+                "knowledge",
+                0
+            )
+
+        # ==============================================
+        # Tie breaker using priority
+        # ==============================================
+
+        best = max(
+            candidates,
+            key=lambda intent: self.priority.get(
+                intent,
+                0
+            )
+        )
+
+        # ==============================================
+        # Confidence
+        # ==============================================
+
+        confidence = min(
+            best_score / 3,
+            1.0
+        )
+
+        return self._set_result(
+            best,
+            confidence
+        )
+
+    # ======================================================
+    # SET RESULT
+    # ======================================================
+
+    def _set_result(self, decision, confidence):
+
+        self.last_decision = decision
+        self.last_confidence = confidence
+
+        print(
+            "DEBUG Decision:",
+            decision
+        )
+
+        print(
+            "DEBUG Confidence:",
+            confidence
+        )
+
+        if self.last_scores:
+            print(
+                "DEBUG Intent Scores:",
+                self.last_scores
+            )
+
+        return decision
+
+    # ======================================================
+    # GET LAST DECISION
+    # ======================================================
+
+    def get_last_decision(self):
+
+        return {
+            "decision": self.last_decision,
+            "confidence": self.last_confidence,
+            "scores": self.last_scores
+        }
+
+    # ======================================================
+    # GET SCORES
+    # ======================================================
+
+    def get_scores(self):
+        return self.last_scores
+

@@ -1,0 +1,26 @@
+{
+    "gui": {
+        "name": "Graphical User Interface",
+        "description": "GUI stands for Graphical User Interface. It allows people to interact with computers using visual elements such as windows, icons, buttons, menus, and images instead of only typing commands."
+    },
+
+    "linux": {
+        "name": "Linux",
+        "description": "Linux is an open-source operating system kernel created by Linus Torvalds in 1991. Many operating systems are built using Linux."
+    },
+
+    "python": {
+        "name": "Python Programming Language",
+        "description": "Python is a high-level programming language known for its simple syntax and wide use in software development, automation, artificial intelligence, and data science."
+    },
+
+    "ai": {
+        "name": "Artificial Intelligence",
+        "description": "Artificial Intelligence is the field of creating computer systems that can perform tasks that normally require human intelligence, such as understanding language, recognizing images, and solving problems."
+    },
+
+    "computer": {
+        "name": "Computer",
+        "description": "A computer is an electronic machine that processes data, performs calculations, stores information, and runs applications."
+    }
+}

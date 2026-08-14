@@ -13,27 +13,33 @@ class Database:
         self.create_tables()
 
 
+    # =====================================
+    # Create Tables
+    # =====================================
+
     def create_tables(self):
 
         cursor = self.connection.cursor()
 
         cursor.execute("""
-        CREATE TABLE IF NOT EXISTS memories (
+        CREATE TABLE IF NOT EXISTS memories(
 
             id INTEGER PRIMARY KEY AUTOINCREMENT,
 
             category TEXT,
 
-            key TEXT,
+            key TEXT UNIQUE,
 
             value TEXT
-
         )
         """)
 
         self.connection.commit()
 
 
+    # =====================================
+    # Save / Update Memory
+    # =====================================
 
     def save_memory(self, category, key, value):
 
@@ -41,10 +47,16 @@ class Database:
 
         cursor.execute(
             """
-            INSERT INTO memories
-            (category, key, value)
+            INSERT INTO memories(category, key, value)
 
-            VALUES (?, ?, ?)
+            VALUES(?, ?, ?)
+
+            ON CONFLICT(key)
+
+            DO UPDATE SET
+
+                value=excluded.value,
+                category=excluded.category
             """,
             (
                 category,
@@ -56,16 +68,81 @@ class Database:
         self.connection.commit()
 
 
+    # =====================================
+    # Get All Memories
+    # =====================================
 
     def get_memories(self):
 
         cursor = self.connection.cursor()
 
+        cursor.execute("""
+        SELECT id, category, key, value
+
+        FROM memories
+
+        ORDER BY id
+        """)
+
+        return cursor.fetchall()
+
+
+    # =====================================
+    # Search Memory
+    # =====================================
+
+    def find_memory(self, key):
+
+        cursor = self.connection.cursor()
+
         cursor.execute(
             """
-            SELECT category, key, value
+            SELECT id, category, key, value
+
+            FROM memories
+
+            WHERE key=?
+            """,
+            (key,)
+        )
+
+        return cursor.fetchone()
+
+
+    # =====================================
+    # Delete Memory
+    # =====================================
+
+    def delete_memory(self, key):
+
+        cursor = self.connection.cursor()
+
+        cursor.execute(
+            """
+            DELETE FROM memories
+
+            WHERE key=?
+            """,
+            (key,)
+        )
+
+        self.connection.commit()
+
+
+    # =====================================
+    # Count Memories
+    # =====================================
+
+    def count(self):
+
+        cursor = self.connection.cursor()
+
+        cursor.execute(
+            """
+            SELECT COUNT(*)
+
             FROM memories
             """
         )
 
-        return cursor.fetchall()
+        return cursor.fetchone()[0]
