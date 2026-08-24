@@ -1139,3 +1139,36 @@ body {
     }
 
 }
+
+/* =========================================================
+   CONNY AI NEW CHAT BUTTON
+   ========================================================= */
+
+.new-chat-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 8px 12px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.05);
+    color: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.2s ease;
+}
+
+.new-chat-button:hover {
+    background: rgba(255, 255, 255, 0.10);
+    transform: translateY(-1px);
+}
+
+.new-chat-button:active {
+    transform: translateY(0);
+}
+
+.new-chat-button span {
+    letter-spacing: 0.4px;
+}
+

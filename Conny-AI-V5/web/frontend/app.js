@@ -347,9 +347,67 @@ input.addEventListener(
 input.focus();
 
 
+
+/* =========================================================
+   CONNY AI CHAT CONTROLS
+   ========================================================= */
+
+const newChatButton = document.getElementById("newChatButton");
+const chatContainer = document.getElementById("chat");
+
+function startNewChat() {
+
+    if (!chatContainer) {
+        return;
+    }
+
+    chatContainer.innerHTML = `
+        <div class="welcome">
+
+            <img
+                class="welcome-representer"
+                src="/frontend/representer/conny-representer.png"
+                alt="CONNY AI representer"
+            >
+
+            <p>
+                All primary systems are online.
+            </p>
+
+            <p>
+                Hello. I'm CONNY.
+            </p>
+
+            <div class="watermark">
+                <strong>CONNY AI</strong>
+                <span>powered by Gwaneza Corneille Karenzi</span>
+            </div>
+
+        </div>
+    `;
+
+    if (input) {
+        input.value = "";
+        input.focus();
+    }
+
+}
+
+if (newChatButton) {
+
+    newChatButton.addEventListener(
+        "click",
+        startNewChat
+    );
+
+}
+
+
 /* =========================================================
    CONNY AI INFORMATION PANEL
    ========================================================= */
+
+
 
 const infoButton = document.getElementById("infoButton");
 const infoOverlay = document.getElementById("infoOverlay");
