@@ -320,7 +320,7 @@ async function sendMessage() {
             connyResponse
         );
 
-        speakConny(connyResponse);
+        // Automatic answer narration disabled in V12.
 
 
     } catch (error) {
