@@ -1205,3 +1205,69 @@ body {
     letter-spacing: 0.4px;
 }
 
+
+/* =========================================================
+   CONNY AI V12 RESPONSIVE CHAT CONTROLS
+   ========================================================= */
+
+@media (max-width: 700px) {
+
+    .topbar {
+        padding: 0 10px;
+    }
+
+    .topbar-actions {
+        gap: 6px;
+    }
+
+    .new-chat-button,
+    .clear-chat-button {
+        width: 34px;
+        height: 34px;
+        padding: 0;
+        justify-content: center;
+        gap: 0;
+    }
+
+    .new-chat-button span,
+    .clear-chat-button span {
+        display: none;
+    }
+
+    .new-chat-button,
+    .clear-chat-button,
+    .info-button {
+        flex-shrink: 0;
+    }
+
+}
+
+@media (max-width: 420px) {
+
+    .brand {
+        gap: 7px;
+    }
+
+    .brand h1 {
+        font-size: 15px;
+    }
+
+    .featured-label {
+        font-size: 8px !important;
+    }
+
+    .topbar-actions {
+        gap: 4px;
+    }
+
+    .composer {
+        margin: 0 7px;
+        gap: 6px;
+        padding: 7px;
+    }
+
+    #messageInput {
+        min-width: 0;
+    }
+
+}
