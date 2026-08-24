@@ -20,7 +20,27 @@ function getConnySessionId() {
     return id;
 }
 
-const CONNY_SESSION_ID = getConnySessionId();
+let CONNY_SESSION_ID = getConnySessionId();
+
+function createNewConnySession() {
+
+    if (window.crypto && crypto.randomUUID) {
+        CONNY_SESSION_ID = crypto.randomUUID();
+    } else {
+        CONNY_SESSION_ID =
+            "conny-" +
+            Date.now() +
+            "-" +
+            Math.random().toString(36).slice(2);
+    }
+
+    localStorage.setItem(
+        "conny_session_id",
+        CONNY_SESSION_ID
+    );
+
+    return CONNY_SESSION_ID;
+}
 
 // ============================================================
 // CONNY V12 CHAT SESSION HEADER
@@ -37,7 +57,10 @@ window.fetch = function(input, init = {}) {
     if (url.includes("/api/chat")) {
         const headers = new Headers(init.headers || {});
 
-        headers.set("X-Session-ID", CONNY_SESSION_ID);
+        headers.set(
+            "X-Session-ID",
+            CONNY_SESSION_ID
+        );
 
         init = {
             ...init,
@@ -349,6 +372,60 @@ input.focus();
 
 
 /* =========================================================
+   CONNY AI CLEAR CHAT
+   ========================================================= */
+
+const clearChatButton = document.getElementById("clearChatButton");
+
+function clearCurrentChat() {
+
+    if (!chatContainer) {
+        return;
+    }
+
+    chatContainer.innerHTML = `
+        <div class="welcome">
+
+            <img
+                class="welcome-representer"
+                src="/frontend/representer/conny-representer.png"
+                alt="CONNY AI representer"
+            >
+
+            <p>
+                All primary systems are online.
+            </p>
+
+            <p>
+                Hello. I'm CONNY.
+            </p>
+
+            <div class="watermark">
+                <strong>CONNY AI</strong>
+                <span>powered by Gwaneza Corneille Karenzi</span>
+            </div>
+
+        </div>
+    `;
+
+    if (input) {
+        input.value = "";
+        input.focus();
+    }
+
+}
+
+if (clearChatButton) {
+
+    clearChatButton.addEventListener(
+        "click",
+        clearCurrentChat
+    );
+
+}
+
+
+/* =========================================================
    CONNY AI CHAT CONTROLS
    ========================================================= */
 
@@ -356,6 +433,8 @@ const newChatButton = document.getElementById("newChatButton");
 const chatContainer = document.getElementById("chat");
 
 function startNewChat() {
+
+    createNewConnySession();
 
     if (!chatContainer) {
         return;
