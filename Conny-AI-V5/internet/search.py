@@ -1,6 +1,6 @@
 import requests
 from bs4 import BeautifulSoup
-from urllib.parse import urlparse, parse_qs, unquote
+from urllib.parse import urlparse, parse_qs, unquote, quote
 
 
 class SearchEngine:
@@ -151,7 +151,20 @@ class SearchEngine:
             if not results:
 
                 print(
-                    "DEBUG SearchEngine: NO RESULTS"
+                    "DEBUG SearchEngine: "
+                    "DUCKDUCKGO NO RESULTS — USING MEDIAWIKI FALLBACK"
+                )
+
+                fallback = self._search_mediawiki(
+                    query
+                )
+
+                if fallback:
+                    return fallback
+
+                print(
+                    "DEBUG SearchEngine: "
+                    "NO RESULTS FROM ALL PROVIDERS"
                 )
 
                 return None
@@ -175,6 +188,326 @@ class SearchEngine:
             )
 
             return None
+
+    # ==================================================
+    # MEDIAWIKI FALLBACK SEARCH
+    # ==================================================
+
+    def _search_mediawiki(self, query):
+
+        query = str(query).strip()
+
+        if not query:
+            return None
+
+        # ------------------------------------------
+        # Build multiple search strategies
+        # ------------------------------------------
+
+        lower = query.lower()
+
+        queries = []
+
+        # ------------------------------------------
+        # Semantic query strategies
+        # ------------------------------------------
+
+        # "what is the capital of France"
+        # -> search the actual subject: France
+        if "capital of " in lower:
+
+            subject = lower.split(
+                "capital of ",
+                1
+            )[1].strip()
+
+            if subject:
+                queries.append(subject)
+
+        # "who is Albert Einstein"
+        # -> search Albert Einstein
+        for prefix in (
+            "who is ",
+            "who was ",
+            "what is ",
+            "what are ",
+            "what's ",
+            "where is ",
+            "where are ",
+            "tell me about ",
+            "information about ",
+            "explain ",
+        ):
+
+            if lower.startswith(prefix):
+
+                subject = query[
+                    len(prefix):
+                ].strip()
+
+                if subject:
+                    queries.append(subject)
+
+                break
+
+        # Original query remains a fallback strategy.
+        queries.append(query)
+
+        # Natural-language question cleanup
+        prefixes = (
+            "what is ",
+            "what are ",
+            "what's ",
+            "who is ",
+            "who was ",
+            "where is ",
+            "where are ",
+            "when was ",
+            "when did ",
+            "tell me about ",
+            "information about ",
+            "explain ",
+        )
+
+        cleaned = lower
+
+        for prefix in prefixes:
+
+            if cleaned.startswith(prefix):
+                cleaned = cleaned[
+                    len(prefix):
+                ].strip()
+                break
+
+        if cleaned and cleaned != lower:
+            queries.append(cleaned)
+
+        # ------------------------------------------
+        # Special high-value question patterns
+        # ------------------------------------------
+
+        if "capital of " in lower:
+
+            subject = lower.split(
+                "capital of ",
+                1
+            )[1].strip()
+
+            if subject:
+                queries.append(subject)
+
+        # Remove duplicates while preserving order
+        unique_queries = []
+
+        for item in queries:
+
+            item = item.strip()
+
+            if (
+                item
+                and item.lower()
+                not in {
+                    q.lower()
+                    for q in unique_queries
+                }
+            ):
+                unique_queries.append(item)
+
+        # ------------------------------------------
+        # Try each strategy
+        # ------------------------------------------
+
+        for search_query in unique_queries:
+
+            try:
+
+                url = (
+                    "https://en.wikipedia.org/"
+                    "w/rest.php/v1/search/page"
+                )
+
+                response = requests.get(
+                    url,
+                    params={
+                        "q": search_query,
+                        "limit": max(
+                            self.max_results,
+                            10
+                        )
+                    },
+                    headers={
+                        "User-Agent": "CONNY-AI/11.0"
+                    },
+                    timeout=self.timeout
+                )
+
+                response.raise_for_status()
+
+                data = response.json()
+
+                pages = data.get(
+                    "pages",
+                    []
+                )
+
+                if not pages:
+                    continue
+
+                scored = []
+
+                original_words = {
+                    word.lower()
+                    for word in query.split()
+                    if len(word) > 2
+                }
+
+                search_words = {
+                    word.lower()
+                    for word in search_query.split()
+                    if len(word) > 2
+                }
+
+                for page in pages:
+
+                    title = page.get(
+                        "title",
+                        ""
+                    ).strip()
+
+                    description = page.get(
+                        "description",
+                        ""
+                    ).strip()
+
+                    key = page.get(
+                        "key",
+                        ""
+                    ).strip()
+
+                    if not title:
+                        continue
+
+                    title_words = {
+                        word.lower()
+                        for word in title.split()
+                        if len(word) > 2
+                    }
+
+                    description_words = {
+                        word.lower()
+                        for word in description.split()
+                        if len(word) > 2
+                    }
+
+                    # ----------------------------------
+                    # Relevance score
+                    # ----------------------------------
+
+                    score = 0
+
+                    score += len(
+                        title_words & search_words
+                    ) * 5
+
+                    score += len(
+                        title_words & original_words
+                    ) * 3
+
+                    score += len(
+                        description_words & original_words
+                    )
+
+                    # Exact title/query relationship
+                    if title.lower() == search_query.lower():
+                        score += 12
+
+                    if search_query.lower() in title.lower():
+                        score += 6
+
+                    # Strong preference for exact subject
+                    if (
+                        "capital of " in lower
+                        and cleaned
+                        and cleaned.lower() in title.lower()
+                    ):
+                        score += 15
+
+                    page_url = ""
+
+                    if key:
+                        page_url = (
+                            "https://en.wikipedia.org/wiki/"
+                            + quote(
+                                key,
+                                safe=""
+                            )
+                        )
+
+                    scored.append(
+                        (
+                            score,
+                            {
+                                "title": title,
+                                "url": page_url,
+                                "snippet": description
+                            }
+                        )
+                    )
+
+                if not scored:
+                    continue
+
+                scored.sort(
+                    key=lambda item: item[0],
+                    reverse=True
+                )
+
+                # ----------------------------------
+                # Quality gate
+                # ----------------------------------
+
+                best_score = scored[0][0]
+
+                if best_score <= 0:
+                    print(
+                        "DEBUG SearchEngine: "
+                        f"MEDIAWIKI LOW QUALITY "
+                        f"FOR QUERY: {search_query}"
+                    )
+                    continue
+
+                results = [
+                    item[1]
+                    for item in scored[
+                        :self.max_results
+                    ]
+                ]
+
+                print(
+                    "DEBUG SearchEngine: "
+                    f"MEDIAWIKI RELEVANT RESULTS "
+                    f"USING QUERY: {search_query}"
+                )
+
+                return {
+                    "type": "search",
+                    "query": query,
+                    "results": results
+                }
+
+            except Exception as error:
+
+                print(
+                    "DEBUG SearchEngine MediaWiki Error:",
+                    error
+                )
+
+        print(
+            "DEBUG SearchEngine: "
+            "MEDIAWIKI NO QUALITY RESULTS"
+        )
+
+        return None
 
     # ==================================================
     # URL CLEANER

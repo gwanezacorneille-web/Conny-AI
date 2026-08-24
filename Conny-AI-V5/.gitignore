@@ -1,0 +1,37 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Virtual environments
+conny_env/
+venv/
+.venv/
+
+# Backups
+backups/
+
+# Local databases / runtime data
+*.db
+*.sqlite
+*.sqlite3
+
+# Logs
+*.log
+/tmp/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Environment secrets
+.env
+.env.*
+!.env.example
+brain/*backup*
+brain/*broken*
+brain/*before*

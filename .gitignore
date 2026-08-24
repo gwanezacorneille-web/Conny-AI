@@ -1,3 +1,60 @@
 __pycache__/
 *.pyc
 *_backup.py
+
+# Local Python environment
+Conny-AI-V5/conny_env/
+
+# Local database
+Conny-AI-V5/database/*.db
+
+# Local backups
+Conny-AI-V5/backups/
+
+# V12 backup copies
+Conny-AI-V5/**/*.v12_*_backup
+Conny-AI-V5/**/*.v12-before-*
+Conny-AI-V5/**/*.backup*
+Conny-AI-V5/**/*.bak
+
+# Archives / frozen local snapshots
+Conny-AI-V5/*.zip
+Conny-AI-V5/*.tar.gz
+
+# Local Python environment
+Conny-AI-V5/conny_env/
+
+# Local database
+Conny-AI-V5/database/*.db
+
+# Local backups
+Conny-AI-V5/backups/
+
+# V12 backup copies
+Conny-AI-V5/**/*.v12_*_backup
+Conny-AI-V5/**/*.v12-before-*
+Conny-AI-V5/**/*.backup*
+Conny-AI-V5/**/*.bak
+
+# Archives / frozen local snapshots
+Conny-AI-V5/*.zip
+Conny-AI-V5/*.tar.gz
+
+# Local V10/V11/V12/V15 snapshots
+Conny-AI-V10/
+Conny-AI-V10-FINAL/
+Conny-AI-V10-FINAL-BACKUP/
+Conny-AI-V10_BRAIN_STRESS_100_PERCENT/
+Conny-AI-V11-FROZEN-*/
+Conny-AI-V11-FROZEN-*.tar.gz
+
+# Versioned backup copies inside project
+Conny-AI-V5/**/*.v12-*
+Conny-AI-V5/**/*.v12_*
+Conny-AI-V5/**/*_backup
+Conny-AI-V5/**/*_backup.*
+Conny-AI-V5/**/*.bak
+
+# Development backup/source snapshots
+Conny-AI-V5/**/*_before_*.py
+Conny-AI-V5/**/*_before_*

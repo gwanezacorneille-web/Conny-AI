@@ -1,3 +1,4 @@
+import re
 class Router:
     """
     CONNY AI Request Router V7
@@ -43,6 +44,52 @@ class Router:
             lower = text.lower().strip()
 
             # ==================================================
+            # V12 ABSOLUTE SELF-KNOWLEDGE
+            # ==================================================
+
+            absolute_self_knowledge = {
+                "why were you created":
+                    "I was created as an evolving AI project to understand people, reason about requests, assist users, act when appropriate, verify results, and continuously improve.",
+
+                "what can you do":
+                    "I can understand requests, answer questions, reason, use knowledge, search online, help with coding, calculations, technical projects, memory, tools, and other supported tasks.",
+
+                "what is your mission":
+                    "My mission is to become a useful, capable, trustworthy, and continuously improving AI assistant.",
+
+                "what technologies do you use":
+                    "I am primarily built with Python using a modular architecture containing the Brain, Router, Intent Engine, Decision Engine, Knowledge Engine, Memory, Reasoning, Coding, Internet, Tools, Plugins, Voice, Vision, and web interface.",
+
+                "how are you built":
+                    "I am built as a modular Python AI system. Requests pass through language understanding, intent detection, decision making, routing, intelligence modules, and response generation.",
+
+                "tell me about your architecture":
+                    "My architecture is modular and includes the Brain, Intent Engine, Decision Engine, Router, Knowledge Engine, Memory, Reasoning Engine, Coding Engine, Internet modules, Tools, Plugins, Voice, Vision, and web interface.",
+
+                "tell me your history":
+                    "CONNY AI began at V1 and evolved through successive development versions. Each version expanded its intelligence, architecture, capabilities, and interface. V10 reached major intelligence and routing milestones, V11 introduced the GUI, and V12 focuses on building the full website.",
+
+                "what is v11":
+                    "V11 is the CONNY AI GUI development stage.",
+
+                "what is v12":
+                    "V12 is the CONNY AI website development stage.",
+
+                "what is v13":
+                    "V13 is planned as the CONNY AI desktop application stage.",
+
+                "what is v14":
+                    "V14 is planned for security and user accounts.",
+
+                "what is v15":
+                    "V15 is planned for final cleaning, finishing, upgrading, and release."
+            }
+
+            for phrase, answer in absolute_self_knowledge.items():
+                if phrase in lower:
+                    return answer
+
+            # ==================================================
             # IDENTITY
             # ==================================================
             #
@@ -50,37 +97,163 @@ class Router:
             # They must never fall through to knowledge.
             #
 
-            identity_phrases = (
-                "what is your name",
-                "what's your name",
-                "whats your name",
-                "who are you",
-                "what are you",
-                "tell me your name",
-                "your name",
-                "who is conny",
-                "who is conny ai",
-                "what is conny",
-                "what's conny",
-                "introduce yourself"
-            )
+            # ==================================================
+            # V12 LEGENDARY CORE IDENTITY
+            # ==================================================
 
-            if any(
-                phrase in lower
-                for phrase in identity_phrases
-            ):
+            identity_answers = {
+                "who are you":
+                    "I'm CONNY AI, an evolving personal AI project created by Gwaneza Corneille Karenzi in Rwanda. My current development version is V12.",
 
-                return (
-                    "I'm CONNY AI, your personal AI assistant."
-                )
+                "what is your name":
+                    "My name is CONNY AI.",
 
-            # Explicit identity intent
+                "what's your name":
+                    "My name is CONNY AI.",
 
-            if intent == "identity":
+                "whats your name":
+                    "My name is CONNY AI.",
 
-                return (
-                    "I'm CONNY AI, your personal AI assistant."
-                )
+                "what are you":
+                    "I'm CONNY AI, an evolving personal AI project created by Gwaneza Corneille Karenzi.",
+
+                "who created you":
+                    "I was created by Gwaneza Corneille Karenzi in Rwanda.",
+
+                "who made you":
+                    "I was created by Gwaneza Corneille Karenzi in Rwanda.",
+
+                "who is your creator":
+                    "My creator is Gwaneza Corneille Karenzi.",
+
+                "who is conny":
+                    "CONNY AI is an evolving personal AI project created by Gwaneza Corneille Karenzi in Rwanda.",
+
+                "what is conny ai":
+                    "CONNY AI is an evolving personal AI project designed to understand, reason, assist, act, verify, and improve.",
+
+                "why were you created":
+                    "I was created as an evolving AI project to understand people, reason about requests, assist users, act when appropriate, verify results, and improve over time.",
+
+                "why were you made":
+                    "I was created to become a capable, useful, reasoning AI that continuously improves.",
+
+                "what is your purpose":
+                    "My purpose is to understand people, reason about requests, assist, act when appropriate, verify results, and continuously improve.",
+
+                "what do you do":
+                    "I am designed to understand, reason, assist, act, verify, and improve.",
+
+                "what can you do":
+                    "I can understand requests, answer questions, reason, work with knowledge, search online when needed, help with coding, interact with tools, remember information when supported, and assist with technical projects.",
+
+                "what is your core goal":
+                    "My core goal is: Understand → Reason → Act → Verify → Improve.",
+
+                "what is your main goal":
+                    "My core goal is: Understand → Reason → Act → Verify → Improve.",
+
+                "what is your mission":
+                    "My mission is to become a useful, capable, trustworthy, and continuously improving AI assistant.",
+
+                "what version are you":
+                    "I am currently in V12, the CONNY AI website development stage.",
+
+                "what is your version":
+                    "I am currently in V12, the CONNY AI website development stage.",
+
+                "what are you working on":
+                    "I am currently being developed as the CONNY AI website in V12.",
+
+                "what is v12":
+                    "V12 is the CONNY AI website development stage.",
+
+                "what is v11":
+                    "V11 was the CONNY AI GUI development stage.",
+
+                "what is v13":
+                    "V13 is planned as the CONNY AI desktop application stage.",
+
+                "what is v14":
+                    "V14 is planned for security and accounts.",
+
+                "what is v15":
+                    "V15 is planned for final cleaning, finishing, upgrading, and release.",
+
+                "what is your roadmap":
+                    "My roadmap is V11 = GUI, V12 = Website, V13 = Desktop app, V14 = Security and accounts, and V15 = final cleaning, finishing, upgrading, and release.",
+
+                "where are you from":
+                    "I am a project created in Rwanda by Gwaneza Corneille Karenzi.",
+
+                "where were you created":
+                    "I was created as a project in Rwanda by Gwaneza Corneille Karenzi.",
+
+                "what technologies do you use":
+                    "My development uses Python and a modular architecture containing components for routing, reasoning, knowledge, memory, coding, internet access, tools, voice, vision, and web interaction.",
+
+                "how are you built":
+                    "I am built as a modular AI system with a brain, router, intent engine, reasoning, knowledge, memory, coding, internet, tools, and a web interface.",
+
+                "tell me about your architecture":
+                    "My architecture is modular. It includes language and intent understanding, decision routing, reasoning, knowledge, memory, coding, internet capabilities, tools, and a web interface.",
+
+                "tell me your history":
+                    "CONNY AI has evolved through multiple development stages. V10 focused on major routing and intelligence validation, V11 introduced the GUI, and V12 focuses on the website. Future stages are V13 desktop, V14 security and accounts, and V15 final release preparation.",
+
+                "introduce yourself":
+                    "I'm CONNY AI, an evolving personal AI project created by Gwaneza Corneille Karenzi in Rwanda. My mission is to Understand → Reason → Act → Verify → Improve."
+            }
+
+            # ==================================================
+            # V12 SELF-KNOWLEDGE — PROJECT KNOWLEDGE
+            # ==================================================
+
+            self_knowledge = {
+                "why were you created":
+                    "I was created to become an evolving personal AI that can understand people, reason about requests, assist, act when appropriate, verify results, and continuously improve.",
+
+                "what can you do":
+                    "I can understand questions, detect intent, reason, use local knowledge, search online when needed, remember information, help with coding, calculations, explanations, and other tasks.",
+
+                "what is your mission":
+                    "My mission is to understand, reason, assist, act, verify, and improve while becoming a more capable personal AI.",
+
+                "what technologies do you use":
+                    "I am built primarily with Python and a modular AI architecture including a brain, router, intent engine, knowledge engine, memory, reasoning, coding, internet, voice, vision, tools, and a web interface.",
+
+                "how are you built":
+                    "I am built as a modular Python AI system. My pipeline includes language understanding, intent detection, decision making, routing, knowledge, reasoning, memory, tools, online intelligence, and response generation.",
+
+                "tell me about your architecture":
+                    "My architecture is modular. It includes the Brain, Intent Engine, Decision Engine, Request Router, Knowledge Engine, Memory, Reasoning Engine, Coding Engine, Internet modules, Tools, Plugins, Voice, Vision, and the web interface.",
+
+                "tell me your history":
+                    "CONNY AI evolved through multiple development versions. V10 completed the major intelligence and routing tests, V11 introduced the GUI, and V12 is focused on the full website.",
+
+                "what is v11":
+                    "V11 is the CONNY AI GUI development stage.",
+
+                "what is v12":
+                    "V12 is the CONNY AI website development stage.",
+
+                "what is v13":
+                    "V13 is planned as the CONNY AI desktop application stage.",
+
+                "what is v14":
+                    "V14 is planned for security and user accounts.",
+
+                "what is v15":
+                    "V15 is planned for final cleaning, finishing, upgrading, and releasing CONNY AI."
+            }
+
+            for phrase, answer in self_knowledge.items():
+                if phrase in lower:
+                    return answer
+
+            for phrase, answer in identity_answers.items():
+                if phrase in lower:
+                    return answer
 
             # ==================================================
             # EXPLICIT INTENTS
@@ -366,15 +539,48 @@ class Router:
 
                     return result
 
-                return ( 
+                # V12: If reasoning cannot answer an
+                # explanation request, fall back to knowledge.
+                knowledge_result = self._knowledge(
+                    text,
+                    intent="explanation"
+                )
+
+                if knowledge_result is not None:
+
+                    return knowledge_result
+
+                return (
                     "I couldn't reason through that yet."
-                ) 
+                )
             # ==================================================
             # CALCULATOR
             # ==================================================
 
             if decision == "calculator":
 
+                # V10 Calculator Engine
+                # Handles natural-language arithmetic directly.
+                try:
+
+                    result = self.brain.calculator.calculate(
+                        text
+                    )
+
+                    if result is not None:
+
+                        return self.brain.calculator.format_result(
+                            result
+                        )
+
+                except Exception as error:
+
+                    print(
+                        "DEBUG Calculator Error:",
+                        error
+                    )
+
+                # Keep plugin support as a fallback.
                 result = self._run_plugin(text)
 
                 if result is not None:
@@ -427,55 +633,6 @@ class Router:
                     "to compare those yet."
                 )
 
-            # ==================================================
-            # LOCAL KNOWLEDGE
-            #
-            # Offline knowledge first.
-            # If unavailable, try online.
-            # ==================================================
-
-            if decision == "knowledge":
-
-                result = self._knowledge(
-                    text,
-                    intent
-                )
-
-                if result is not None:
-
-                    return result
-
-                # V8 AUTO ONLINE FALLBACK
-                #
-                # Local knowledge has already been checked.
-                # If CONNY does not know the answer locally,
-                # automatically try the Online Body.
-                #
-                # This allows natural questions such as:
-                #   "who is Elon Musk"
-                #   "what happened today"
-                #   "tell me about SpaceX"
-                #
-                # to reach the internet without requiring
-                # the user to say "search".
-
-                print(
-                    "DEBUG V8: LOCAL KNOWLEDGE FAILED"
-                )
-
-                result = self._auto_online(
-                    text,
-                    intent
-                )
-
-                if result is not None:
-
-                    return result
-
-                return (
-                    "I don't have a good answer for that "
-                    "yet, either locally or online."
-                )
 
             # ==================================================
             # OTHER PLUGINS
@@ -486,12 +643,24 @@ class Router:
             if result is not None:
 
                 return result
-
             # ==================================================
             # FINAL LOCAL KNOWLEDGE
             # ==================================================
 
             result = self._knowledge(
+                text,
+                intent
+            )
+
+            if result is not None:
+
+                return result
+
+            # ==================================================
+            # V10 AUTOMATIC ONLINE KNOWLEDGE FALLBACK
+            # ==================================================
+
+            result = self._auto_online(
                 text,
                 intent
             )
@@ -664,6 +833,15 @@ class Router:
 
         content = original
 
+        # ------------------------------------------
+        # Normalize "remember that ..."
+        # ------------------------------------------
+
+        if content.lower().startswith("remember that "):
+            content = content[
+                len("remember that "):
+            ].strip()
+
         for prefix in prefixes:
 
             if content.lower().startswith(prefix):
@@ -736,7 +914,7 @@ class Router:
         )
 
     # ==================================================
-    # COMPARISON
+     # COMPARISON
     # ==================================================
 
     def _comparison(
@@ -745,6 +923,182 @@ class Router:
     ):
 
         lower = text.lower().strip()
+
+        # ------------------------------------------
+        # NUMERIC COMPARISON
+        # ------------------------------------------
+
+        if (
+            "what is greater" in lower
+            or "which is greater" in lower
+            or "what is bigger" in lower
+            or "which is bigger" in lower
+            or "what is larger" in lower
+            or "which is larger" in lower
+            or "what is smaller" in lower
+            or "which is smaller" in lower
+            or "what is less" in lower
+            or "which is less" in lower
+            or "greater than" in lower
+            or "bigger than" in lower
+            or "larger than" in lower
+            or "less than" in lower
+            or "which is greatest" in lower
+            or "which is biggest" in lower
+            or "which is largest" in lower
+            or "which is smallest" in lower
+            or "which is least" in lower
+            or "which is lowest" in lower
+            or "compare" in lower
+            or "equal to" in lower
+            or "are equal" in lower
+            or " equal" in lower
+            or "the same" in lower
+            or "same as" in lower
+        ):
+
+
+            numbers = [
+                float(value)
+                for value in re.findall(
+                    r"-?\d+(?:\.\d+)?",
+                    lower
+                )
+            ]
+
+            if len(numbers) >= 2:
+
+                # ----------------------------------
+                # GREATEST / LARGEST / BIGGEST
+                # ----------------------------------
+
+                if (
+                    "greatest" in lower
+                    or "largest" in lower
+                    or "biggest" in lower
+                ):
+
+                    greatest = max(numbers)
+
+                    if greatest.is_integer():
+                        greatest = int(greatest)
+
+                    return (
+                        f"{greatest} is the greatest."
+                    )
+
+                # ----------------------------------
+                # SMALLEST / LEAST / LOWEST
+                # ----------------------------------
+
+                if (
+                    "smallest" in lower
+                    or "least" in lower
+                    or "lowest" in lower
+                ):
+
+                    smallest = min(numbers)
+
+                    if smallest.is_integer():
+                        smallest = int(smallest)
+
+                    return (
+                        f"{smallest} is the smallest."
+                    )
+
+                # ----------------------------------
+                # TWO-NUMBER VALUES
+                # ----------------------------------
+
+                first = numbers[0]
+                second = numbers[1]
+
+                # ----------------------------------
+                # EQUALITY TWO-NUMBER QUESTION
+                # ----------------------------------
+
+                if (
+                    "equal to" in lower
+                    or "are equal" in lower
+                    or "the same" in lower
+                    or "same as" in lower
+                ):
+
+                    if first == second:
+                        return (
+                            f"{first} and {second} are equal."
+                        )
+
+                    return (
+                        f"{first} and {second} are not equal."
+                    )
+
+                # ----------------------------------
+                # SMALLER / LESS TWO-NUMBER QUESTION
+                # ----------------------------------
+
+                if (
+                    "smaller" in lower
+                    or "less" in lower
+                ):
+
+                    if first < second:
+
+                        return (
+                            f"{first} is smaller than "
+                            f"{second}."
+                        )
+
+                    if second < first:
+
+                        return (
+                            f"{second} is smaller than "
+                            f"{first}."
+                        )
+
+                    return (
+                        f"{first} and {second} are equal."
+                    )
+
+                # ----------------------------------
+                # TWO-NUMBER GREATER COMPARISON
+                # ----------------------------------
+
+                if first > second:
+
+                    if first.is_integer():
+                        first = int(first)
+
+                    if second.is_integer():
+                        second = int(second)
+
+                    return (
+                        f"{first} is greater than "
+                        f"{second}."
+                    )
+
+                if second > first:
+
+                    if first.is_integer():
+                        first = int(first)
+
+                    if second.is_integer():
+                        second = int(second)
+
+                    return (
+                        f"{second} is greater than "
+                        f"{first}."
+                    )
+
+                if first.is_integer():
+                    first = int(first)
+
+                if second.is_integer():
+                    second = int(second)
+
+                return (
+                    f"{first} and {second} are equal."
+                )
 
         # ------------------------------------------
         # RAM vs ROM
@@ -875,12 +1229,49 @@ class Router:
             )
 
         # ------------------------------------------
+        # PYTHON vs JAVASCRIPT
+        # ------------------------------------------
+
+        if (
+            "python" in lower
+            and "javascript" in lower
+        ):
+
+            return (
+                "Python vs JavaScript\n\n"
+
+                "Python:\n\n"
+
+                "- High-level, general-purpose programming language\n"
+                "- Known for concise and readable syntax\n"
+                "- Commonly used for AI, automation, data science "
+                "and backend development\n"
+                "- Dynamically typed\n\n"
+
+                "JavaScript:\n\n"
+
+                "- High-level programming language primarily used "
+                "for web development\n"
+                "- Runs natively in web browsers\n"
+                "- Also used for backend development with runtimes "
+                "such as Node.js\n"
+                "- Dynamically typed\n\n"
+
+                "Main difference:\n"
+                "Python is widely used for general-purpose programming, "
+                "automation, AI and data science, while JavaScript is "
+                "especially important for interactive web applications "
+                "and can also be used on the server."
+            )
+
+        # ------------------------------------------
         # PYTHON vs JAVA
         # ------------------------------------------
 
         if (
             "python" in lower
             and "java" in lower
+            and "javascript" not in lower
         ):
 
             return (
@@ -910,9 +1301,162 @@ class Router:
 
         return None
 
-    # ==================================================
-    # KNOWLEDGE
-    # ==================================================
+
+    # ============================================================
+    # V12 RESPONSE QUALITY CLEANER
+    # ============================================================
+
+    def _v12_clean_knowledge_response(self, query, result):
+        """
+        V12 response-quality cleaner.
+
+        Converts structured knowledge/search results into a concise,
+        useful natural-language answer instead of exposing raw result
+        dumps to the user.
+        """
+
+        if not result:
+            return None
+
+        # --------------------------------------------------
+        # Extract structured data safely
+        # --------------------------------------------------
+
+        if isinstance(result, dict):
+            name = str(result.get("name", "")).strip()
+
+            data = result.get("data", {})
+
+            if not isinstance(data, dict):
+                data = {}
+
+            definition = str(
+                data.get("definition", "")
+            ).strip()
+
+            answer = str(
+                data.get("answer", "")
+            ).strip()
+
+            description = str(
+                data.get("description", "")
+            ).strip()
+
+            # Prefer the most useful concise field.
+            if definition:
+                response = definition
+            elif answer:
+                response = answer
+            elif description:
+                response = description
+            else:
+                response = ""
+
+            if response:
+                response = re.sub(
+                    r"^\s*(?:here are the top results.*?:\s*)",
+                    "",
+                    response,
+                    flags=re.IGNORECASE | re.DOTALL,
+                ).strip()
+
+                return response
+
+            # --------------------------------------------------
+            # Search-result fallback
+            # --------------------------------------------------
+
+            items = (
+                result.get("results")
+                or result.get("items")
+                or result.get("data")
+            )
+
+            if isinstance(items, list):
+                useful = []
+
+                for item in items[:3]:
+
+                    if not isinstance(item, dict):
+                        continue
+
+                    title = str(
+                        item.get("title")
+                        or item.get("name")
+                        or ""
+                    ).strip()
+
+                    snippet = str(
+                        item.get("snippet")
+                        or item.get("description")
+                        or item.get("text")
+                        or ""
+                    ).strip()
+
+                    if title and snippet:
+                        useful.append(
+                            f"{title}: {snippet}"
+                        )
+                    elif snippet:
+                        useful.append(snippet)
+
+                if useful:
+                    return "\n\n".join(useful)
+
+            return name or None
+
+        # --------------------------------------------------
+        # Plain-text fallback
+        # --------------------------------------------------
+
+        if isinstance(result, str):
+
+            cleaned = result.strip()
+
+            cleaned = re.sub(
+                r"^\s*here are the top results.*?:\s*",
+                "",
+                cleaned,
+                flags=re.IGNORECASE | re.DOTALL,
+            )
+
+            # Remove numbered search-result formatting.
+            cleaned = re.sub(
+                r"(?m)^\s*\d+[.)]\s*",
+                "",
+                cleaned,
+            )
+
+            return cleaned.strip() or None
+
+        return str(result).strip() or None
+
+    # V12 PYTHON DISAMBIGUATION
+    def _v12_normalize_knowledge_query(self, query):
+        """
+        Prefer Python programming-language knowledge for
+        ambiguous questions such as:
+            What is Python?
+            Explain Python.
+            Python programming language
+        """
+
+        text = str(query).strip()
+
+        if re.search(
+            r"\bpython\b",
+            text,
+            re.IGNORECASE
+        ):
+            return re.sub(
+                r"\bpython\b",
+                "Python programming language",
+                text,
+                count=1,
+                flags=re.IGNORECASE
+            )
+
+        return text
 
     def _knowledge(
         self,
@@ -922,8 +1466,12 @@ class Router:
 
         try:
 
-            result = self.brain.knowledge.search(
+            normalized_query = self._v12_normalize_knowledge_query(
                 text
+            )
+
+            result = self.brain.knowledge.search(
+                normalized_query
             )
 
         except Exception as error:
@@ -1187,4 +1735,10 @@ class Router:
                 error
             )
 
-            return None
+            return (
+                self.brain.response.error_response()
+            )
+
+    # ==================================================
+    # COMPARISON
+    # ==================================================

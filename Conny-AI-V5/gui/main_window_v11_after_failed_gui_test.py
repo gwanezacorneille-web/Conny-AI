@@ -1,6 +1,5 @@
 import tkinter as tk
 import threading
-import queue
 from datetime import datetime
 from brain.brain import Brain
 
@@ -43,16 +42,6 @@ class ConnyNeuralSpace:
         self.brain = Brain()
 
         # =====================================================
-        # BRAIN RESULT QUEUE
-        # =====================================================
-        #
-        # Worker threads place results here.
-        # Only the Tkinter GUI thread reads the queue.
-        #
-
-        self.brain_result_queue = queue.Queue()
-
-        # =====================================================
         # BRAIN PROCESSING LOCK
         # =====================================================
         #
@@ -75,15 +64,6 @@ class ConnyNeuralSpace:
         self.create_header()
         self.create_main_area()
         self.create_command_bar()
-
-        # =====================================================
-        # START BRAIN RESULT QUEUE POLLER
-        # =====================================================
-
-        self.root.after(
-            50,
-            self.poll_brain_results
-        )
 
         # =====================================================
         # KEYBOARD SHORTCUTS
@@ -178,7 +158,7 @@ class ConnyNeuralSpace:
 
         tk.Label(
             title,
-            text="NEURAL SPACE  //  V11",
+            text="NEURAL SPACE  //  V10",
             bg=self.bg,
             fg=self.cyan,
             font=("DejaVu Sans", 8, "bold")
@@ -327,12 +307,6 @@ class ConnyNeuralSpace:
 
         # Refresh live system status after all status widgets exist.
         self.refresh_system_status()
-
-        # Start the live status refresh loop.
-        self.root.after(
-            1000,
-            self.refresh_system_status_loop
-        )
 
     # =========================================================
     # LEFT PANEL
@@ -769,21 +743,6 @@ class ConnyNeuralSpace:
                 )
 
 
-    def refresh_system_status_loop(self):
-        """
-        Continuously refresh live system status.
-
-        Runs on Tkinter's GUI event loop.
-        """
-
-        self.refresh_system_status()
-
-        self.root.after(
-            1000,
-            self.refresh_system_status_loop
-        )
-
-
     # =========================================================
     # STATUS ITEM
     # =========================================================
@@ -1020,7 +979,7 @@ class ConnyNeuralSpace:
     # BACKGROUND BRAIN WORKER
     # =========================================================
 
-    def process_brain_worker(self, message):
+    def process_brain_worker(self, message, callback):
         """
         Run Brain.process() outside the Tkinter GUI thread.
 
@@ -1039,55 +998,16 @@ class ConnyNeuralSpace:
             if answer is None:
                 answer = "No response generated."
 
-            self.brain_result_queue.put(
-                (
-                    True,
-                    str(answer)
-                )
+            callback(
+                True,
+                str(answer)
             )
 
         except Exception as error:
 
-            self.brain_result_queue.put(
-                (
-                    False,
-                    f"{type(error).__name__}: {error}"
-                )
-            )
-
-    # =========================================================
-    # BRAIN RESULT QUEUE POLLER
-    # =========================================================
-
-    def poll_brain_results(self):
-        """
-        Check for Brain results from the GUI thread.
-
-        Worker threads never touch Tkinter directly.
-        This method runs through Tkinter's event loop.
-        """
-
-        try:
-
-            while True:
-
-                success, result = (
-                    self.brain_result_queue.get_nowait()
-                )
-
-                self._handle_brain_result(
-                    success,
-                    result
-                )
-
-        except queue.Empty:
-            pass
-
-        finally:
-
-            self.root.after(
-                50,
-                self.poll_brain_results
+            callback(
+                False,
+                f"{type(error).__name__}: {error}"
             )
 
     # =========================================================
@@ -1123,6 +1043,7 @@ class ConnyNeuralSpace:
             target=self.process_brain_worker,
             args=(
                 message,
+                self.brain_result_callback
             ),
             daemon=True
         )
@@ -1342,7 +1263,7 @@ class ConnyNeuralSpace:
             "🤖  CONNY AI",
             [
                 ("Name", "CONNY AI"),
-                ("Version", "V11"),
+                ("Version", "V10"),
                 ("Type", "AI Assistant"),
                 ("Architecture", "Modular AI"),
                 ("Mode", "Offline / Online"),

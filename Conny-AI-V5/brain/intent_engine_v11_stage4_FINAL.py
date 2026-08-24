@@ -381,10 +381,6 @@ class IntentEngine:
 
         self.last_scores = {}
 
-        # V11 STAGE 6
-        # Master semantic precedence needs this normalized text.
-        lower_text = text
-
         # ==============================================
         # EMPTY MESSAGE
         # ==============================================
@@ -395,219 +391,6 @@ class IntentEngine:
                 "general",
                 0.0
             )
-
-        # ==============================================
-        # V11 STAGE 6 — MASTER SEMANTIC PRECEDENCE
-        #
-        # Resolve the user's actual request before topic
-        # keywords can hijack the intent.
-        # ==============================================
-
-        import re
-
-        # ------------------------------------------------
-        # 1. EXPLICIT ARITHMETIC
-        # ------------------------------------------------
-
-        arithmetic_patterns = (
-            r"^\s*[-+]?\d+(?:\.\d+)?\s*[+*/%]\s*[-+]?\d+(?:\.\d+)?\s*\??\s*$",
-            r"^\s*(?:what is|what's|whats|calculate|solve)\s+[-+]?\d+(?:\.\d+)?\s*[+*/%]\s*[-+]?\d+(?:\.\d+)?\s*\??\s*$",
-            r"^\s*[-+]?\d+(?:\.\d+)?\s*-\s*[-+]?\d+(?:\.\d+)?\s*\??\s*$",
-        )
-
-        if any(
-            re.match(pattern, lower_text)
-            for pattern in arithmetic_patterns
-        ):
-            return self._set_result(
-                "calculator",
-                1.0
-            )
-
-        # ------------------------------------------------
-        # 2. EXPLICIT COMPARISON
-        # ------------------------------------------------
-
-        master_comparison_signals = (
-            "which one is better",
-            "which is better",
-            "which one is best",
-            "which is best",
-            "what is the difference between",
-            "what's the difference between",
-            "whats the difference between",
-            "difference between",
-            "compare ",
-            " versus ",
-            " vs ",
-            "which is smaller",
-            "which is greater",
-            "which is bigger",
-            "which is larger",
-            "is smaller than",
-            "is greater than",
-            "is bigger than",
-            "is larger than",
-            "are equal",
-            "is equal to",
-        )
-
-        if any(
-            signal in lower_text
-            for signal in master_comparison_signals
-        ):
-            return self._set_result(
-                "comparison",
-                1.0
-            )
-
-        # ------------------------------------------------
-        # 3. EXPLICIT CREATIVE
-        # ------------------------------------------------
-
-        master_creative_signals = (
-            "tell me a joke",
-            "tell me something funny",
-            "tell me a funny joke",
-            "make a joke",
-            "make me a joke",
-            "write a joke",
-            "write me a joke",
-            "create a joke",
-            "give me a joke",
-            "tell me a story",
-            "tell me a funny story",
-            "write a story",
-            "write me a story",
-            "create a story",
-            "make a story",
-            "make up a story",
-            "write a poem",
-            "write me a poem",
-            "create a poem",
-            "make a poem",
-            "make up a poem",
-        )
-
-        if any(
-            signal in lower_text
-            for signal in master_creative_signals
-        ):
-            return self._set_result(
-                "creative",
-                1.0
-            )
-
-        # ------------------------------------------------
-        # 4. EXPLICIT CODING
-        #
-        # A programming language alone does NOT mean coding.
-        # ------------------------------------------------
-
-        master_coding_signals = (
-            "write code",
-            "write a program",
-            "write a script",
-            "write a function",
-            "create code",
-            "create a program",
-            "create a script",
-            "create a function",
-            "make code",
-            "make a program",
-            "make a script",
-            "make a function",
-            "generate code",
-            "build a program",
-            "debug this",
-            "debug my",
-            "fix this code",
-            "fix my code",
-            "find the error in",
-        )
-
-        master_coding_languages = (
-            "python",
-            "javascript",
-            "java",
-            "c++",
-            "c#",
-            "html",
-            "css",
-            "bash",
-            "shell",
-            "typescript",
-            "php",
-            "ruby",
-            "rust",
-        )
-
-        has_master_language = any(
-            language in lower_text
-            for language in master_coding_languages
-        )
-
-        if (
-            has_master_language
-            and any(
-                signal in lower_text
-                for signal in master_coding_signals
-            )
-        ):
-            return self._set_result(
-                "coding",
-                1.0
-            )
-
-        # ------------------------------------------------
-        # 5. LANGUAGE-SPECIFIC CODE CONSTRUCTION
-        #
-        # Examples:
-        #   write Python code
-        #   create JavaScript code
-        #   make a C++ program
-        # ------------------------------------------------
-
-        construction_verbs = (
-            "write",
-            "create",
-            "make",
-            "generate",
-            "build",
-        )
-
-        construction_targets = (
-            "code",
-            "program",
-            "script",
-            "function",
-            "application",
-            "app",
-        )
-
-        has_construction_verb = any(
-            verb in lower_text.split()
-            for verb in construction_verbs
-        )
-
-        has_construction_target = any(
-            target in lower_text
-            for target in construction_targets
-        )
-
-        if (
-            has_master_language
-            and has_construction_verb
-            and has_construction_target
-        ):
-            return self._set_result(
-                "coding",
-                1.0
-            )
-
-        # ==============================================
-        # END MASTER SEMANTIC PRECEDENCE
-        # ==============================================
 
         # ==============================================
         # EXPLICIT ONLINE INTENTS
@@ -1086,120 +869,6 @@ class IntentEngine:
             )
 
         # ------------------------------------------------
-        # V11 STAGE 5 — CODING DEBUG PRECEDENCE
-        #
-        # Debugging/fixing programming problems MUST beat
-        # generic process/reason intents.
-        #
-        # Examples:
-        #   why is my JavaScript program failing
-        #   why does my Python code not work
-        #   why is my C++ program crashing
-        #   how do I fix my Python program
-        #   my JavaScript code has an error
-        # ------------------------------------------------
-
-        coding_languages = (
-            "python",
-            "javascript",
-            "java",
-            "c++",
-            "c#",
-            "html",
-            "css",
-            "bash",
-            "shell",
-            "typescript",
-            "php",
-            "ruby",
-            "go",
-            "rust",
-        )
-
-        coding_targets = (
-            "code",
-            "program",
-            "script",
-            "function",
-            "application",
-            "app",
-            "project",
-        )
-
-        coding_debug_signals = (
-            "not work",
-            "doesn't work",
-            "does not work",
-            "isn't working",
-            "isnt working",
-            "not working",
-            "failing",
-            "failed",
-            "failure",
-            "crashing",
-            "crashed",
-            "crash",
-            "error",
-            "errors",
-            "bug",
-            "bugs",
-            "broken",
-            "breaks",
-            "fix ",
-            "debug",
-            "debugging",
-            "problem",
-            "problems",
-        )
-
-        coding_debug_question_signals = (
-            "why ",
-            "how do i fix",
-            "how can i fix",
-            "how to fix",
-            "can you fix",
-            "help me fix",
-            "help fix",
-            "what is wrong",
-            "what's wrong",
-        )
-
-        has_coding_language = any(
-            language in lower_text
-            for language in coding_languages
-        )
-
-        has_coding_target = any(
-            target in lower_text
-            for target in coding_targets
-        )
-
-        has_debug_signal = any(
-            signal in lower_text
-            for signal in coding_debug_signals
-        )
-
-        has_debug_question = any(
-            signal in lower_text
-            for signal in coding_debug_question_signals
-        )
-
-        if (
-            has_coding_language
-            and (
-                has_debug_signal
-                or (
-                    has_debug_question
-                    and has_coding_target
-                )
-            )
-        ):
-            return self._set_result(
-                "coding",
-                1.0
-            )
-
-        # ------------------------------------------------
         # PROCESS / HOW QUESTIONS
         # ------------------------------------------------
 
@@ -1220,6 +889,61 @@ class IntentEngine:
         ):
             return self._set_result(
                 "process",
+                1.0
+            )
+
+        # ------------------------------------------------
+        # V11 FINAL CODING WHY OVERRIDE
+        #
+        # A question about why a user's programming code
+        # does not work is a coding/debugging request.
+        # This MUST run before generic WHY/reason matching.
+        # ------------------------------------------------
+
+        coding_debug_why = (
+            "why does my",
+            "why is my",
+            "why isn't my",
+            "why isnt my",
+        )
+
+        coding_debug_languages = (
+            "python",
+            "javascript",
+            "java",
+            "c++",
+            "cpp",
+            "c language",
+            "html",
+            "css",
+            "bash",
+            "shell",
+        )
+
+        coding_debug_targets = (
+            "code",
+            "program",
+            "script",
+            "function",
+        )
+
+        coding_debug_failures = (
+            "not work",
+            "doesn't work",
+            "does not work",
+            "isn't working",
+            "isnt working",
+            "not working",
+        )
+
+        if (
+            any(phrase in lower_text for phrase in coding_debug_why)
+            and any(lang in lower_text for lang in coding_debug_languages)
+            and any(target in lower_text for target in coding_debug_targets)
+            and any(failure in lower_text for failure in coding_debug_failures)
+        ):
+            return self._set_result(
+                "coding",
                 1.0
             )
 
@@ -1289,144 +1013,6 @@ class IntentEngine:
         ):
             return self._set_result(
                 "examples",
-                1.0
-            )
-
-        # ==============================================
-        # V11 STAGE 5 — GIANT ROUTING PRECEDENCE FIX
-        #
-        # Explicit comparison, creative, and debugging/
-        # failure requests must beat generic keyword matches.
-        # ==============================================
-
-        lower_text = text.lower().strip()
-
-        # ------------------------------------------------
-        # COMPARISON MUST BEAT PROGRAMMING-LANGUAGE MATCHES
-        # ------------------------------------------------
-
-        comparison_signals = (
-            " vs ",
-            " versus ",
-            "compare ",
-            "difference between ",
-            "which is better ",
-            "what is better ",
-            "which language is better ",
-            "what language is better ",
-            "which programming language is better ",
-            "what programming language is better ",
-        )
-
-        if any(
-            signal in f" {lower_text} "
-            for signal in comparison_signals
-        ):
-            return self._set_result(
-                "comparison",
-                1.0
-            )
-
-        # ------------------------------------------------
-        # EXPLICIT CREATIVE REQUESTS MUST BE PROTECTED
-        #
-        # Example:
-        # "write me a story about a Python programmer"
-        #
-        # The presence of "Python" and "write" must NOT turn
-        # a creative request into coding.
-        # ------------------------------------------------
-
-        creative_signals = (
-            "write me a story",
-            "write a story",
-            "tell me a story",
-            "create a story",
-            "make a story",
-            "write me a poem",
-            "write a poem",
-            "create a poem",
-            "make a poem",
-            "write me a song",
-            "write a song",
-            "create a song",
-            "make a song",
-            "write me a joke",
-            "write a joke",
-            "create a joke",
-            "make a joke",
-        )
-
-        if any(
-            signal in lower_text
-            for signal in creative_signals
-        ):
-            return self._set_result(
-                "creative",
-                1.0
-            )
-
-        # ------------------------------------------------
-        # DEBUGGING / FAILURE QUESTIONS MUST BE CODING
-        #
-        # Example:
-        # "why is my JavaScript program failing"
-        # ------------------------------------------------
-
-        programming_languages = (
-            "python",
-            "javascript",
-            "java",
-            "c++",
-            "c#",
-            "html",
-            "css",
-            "bash",
-            "shell",
-        )
-
-        failure_signals = (
-            "not work",
-            "doesn't work",
-            "does not work",
-            "isn't working",
-            "isnt working",
-            "not working",
-            "failing",
-            "failed",
-            "failure",
-            "broken",
-            "bug",
-            "error",
-            "crash",
-            "crashing",
-        )
-
-        has_programming_language = any(
-            language in lower_text
-            for language in programming_languages
-        )
-
-        has_programming_context = (
-            "code" in lower_text
-            or "program" in lower_text
-            or "script" in lower_text
-            or "function" in lower_text
-            or "class" in lower_text
-        )
-
-        has_failure = any(
-            signal in lower_text
-            for signal in failure_signals
-        )
-
-        if (
-            has_programming_language
-            and has_programming_context
-            and has_failure
-        ):
-            return self._set_result(
-                "coding",
                 1.0
             )
 
@@ -1766,96 +1352,6 @@ class IntentEngine:
             confidence = min(
                 confidence,
                 0.99
-            )
-
-        # ==================================================
-        # V11 STAGE 5 — FINAL CODING PRECEDENCE GUARD
-        #
-        # This is intentionally placed AFTER all scoring and
-        # intent overrides. Explicit programming failure /
-        # debugging requests must never be downgraded to
-        # generic reasoning.
-        # ==================================================
-
-        final_lower_text = text.lower().strip()
-
-        final_programming_languages = (
-            "python",
-            "javascript",
-            "java",
-            "c++",
-            "c#",
-            "html",
-            "css",
-            "bash",
-            "shell",
-            "typescript",
-            "php",
-            "ruby",
-            "go",
-            "rust",
-        )
-
-        final_failure_signals = (
-            "not work",
-            "doesn't work",
-            "does not work",
-            "isn't working",
-            "isnt working",
-            "not working",
-            "failing",
-            "failed",
-            "failure",
-            "broken",
-            "bug",
-            "bugs",
-            "buggy",
-            "error",
-            "errors",
-            "crashing",
-            "crashed",
-            "crash",
-            "debug",
-            "debugging",
-            "fix my code",
-            "fix this code",
-            "fix my program",
-            "fix this program",
-        )
-
-        final_code_context = (
-            "code",
-            "program",
-            "script",
-            "function",
-            "programming",
-        )
-
-        has_programming_language = any(
-            language in final_lower_text
-            for language in final_programming_languages
-        )
-
-        has_failure_signal = any(
-            signal in final_lower_text
-            for signal in final_failure_signals
-        )
-
-        has_code_context = any(
-            signal in final_lower_text
-            for signal in final_code_context
-        )
-
-        if (
-            has_programming_language
-            and has_failure_signal
-        ) or (
-            has_failure_signal
-            and has_code_context
-        ):
-            return self._set_result(
-                "coding",
-                1.0
             )
 
         return self._set_result(

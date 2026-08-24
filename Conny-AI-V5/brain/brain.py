@@ -1,3 +1,4 @@
+from brain.security_engine import SecurityEngine
 from brain.responses import ResponseGenerator
 from brain.emotion_engine import EmotionEngine
 from brain.conversation import Conversation
@@ -9,6 +10,7 @@ from brain.language.language_engine import LanguageEngine
 from brain.router import Router
 from brain.context_engine import ContextEngine
 from brain.coding_engine import CodingEngine
+from brain.calculator_engine import CalculatorEngine
 
 from knowledge.knowledge_engine import KnowledgeEngine
 from memory.memory import Memory
@@ -66,10 +68,22 @@ class Brain:
         self.context = ContextEngine()
 
         # ==================================================
+        # V15 SECURITY
+        # ==================================================
+
+        self.security = SecurityEngine()
+
+        # ==================================================
         # CODING
         # ==================================================
 
         self.coding = CodingEngine(self)
+
+        # ==================================================
+        # CALCULATOR
+        # ==================================================
+
+        self.calculator = CalculatorEngine()
 
         # ==================================================
         # EMOTION
@@ -152,6 +166,10 @@ class Brain:
     # ======================================================
 
     def process(self, message):
+        if not str(message).strip():
+            self.last_intent = "general"
+            return ""
+
 
         try:
 
@@ -177,6 +195,21 @@ class Brain:
 
             self.last_message = text
 
+
+            # ----------------------------------------------
+            # V15 SECURITY CHECK
+            # ----------------------------------------------
+
+            security_result = self.security.check(text)
+
+            if not security_result["allowed"]:
+
+                return (
+                    "That language isn't allowed here. "
+                    "Please use respectful language."
+                )
+
+
             # ----------------------------------------------
             # V9 CONTEXT FOLLOW-UP
             # ----------------------------------------------
@@ -197,6 +230,40 @@ class Brain:
                 )
 
                 lower = text.lower()
+
+                # ==================================================
+                # V12 DIRECT FOLLOW-UP RETURN
+                #
+                # ContextEngine may have already produced the
+                # actual answer to a personal follow-up such as:
+                #
+                # "My favorite project is CONNY AI."
+                # "What is my favorite project?"
+                #
+                # In that case, do NOT send the resolved answer
+                # back through the normal knowledge/search pipeline.
+                # Return it directly.
+                # ==================================================
+
+                if text != original_text:
+
+                    self.last_followup = True
+                    self.followup_depth += 1
+
+                    try:
+                        self.context.add_turn(
+                            original_text,
+                            text,
+                            intent="context_followup",
+                            decision="context"
+                        )
+                    except Exception as context_error:
+                        print(
+                            "DEBUG V12 Context Record Error:",
+                            context_error
+                        )
+
+                    return text
 
             except Exception as error:
 
@@ -380,17 +447,27 @@ class Brain:
                 decision = "knowledge"
 
             # ----------------------------------------------
-            # V9 FOLLOW-UP DECISION OVERRIDE
+            # V10 FOLLOW-UP HANDLING
             # ----------------------------------------------
-
-            if text != original_text:
-
-                decision = "knowledge"
-
-                print(
-                    "DEBUG V9 Follow-up Decision Override:",
-                    decision
-                )
+            #
+            # Follow-up resolution must NOT force the request
+            # into knowledge.
+            #
+            # The resolved message should go through the normal
+            # Intent Engine -> Decision Engine -> Router pipeline.
+            #
+            # V9 incorrectly forced changed messages to
+            # "knowledge", which could break:
+            #
+            #   calculator
+            #   comparison
+            #   coding
+            #   internet
+            #   memory
+            #   reasoning
+            #
+            # V10 keeps the actual decision intact.
+            # ----------------------------------------------
 
             # ----------------------------------------------
             # Debug

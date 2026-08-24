@@ -1,3 +1,4 @@
+import re
 class ContextEngine:
     """
     CONNY AI V9 Context Engine
@@ -77,7 +78,59 @@ class ContextEngine:
     # RESOLVE FOLLOW-UP
     # ==================================================
 
-    def resolve_followup(self, message):
+    def _v12_personal_followup(self, message):
+        """
+        Resolve simple personal follow-up questions.
+
+        Example:
+            My favorite project is CONNY AI.
+            What is my favorite project?
+        """
+
+        text = str(message).strip().lower()
+
+        match = re.match(
+            r"^(?:what|who|where|when)\s+(?:is|are|was|were)\s+my\s+(.+?)\??$",
+            text
+        )
+
+        if not match:
+            return None
+
+        key = match.group(1).strip()
+
+        for turn in reversed(self.history):
+            user_message = str(turn.get("user", "")).strip()
+
+            value_match = re.search(
+                r"\bmy\s+"
+                + re.escape(key)
+                + r"\s+is\s+(.+?)(?:[.!?]|$)",
+                user_message,
+                re.IGNORECASE
+            )
+
+            if value_match:
+                value = value_match.group(1).strip()
+                return f"Your {key} is {value}."
+
+        return None
+
+
+    def resolve_followup(self, message, *args, **kwargs):
+        personal = self._v12_personal_followup(message)
+
+        if personal:
+            return personal
+
+        return self._v12_original_resolve_followup(
+            message,
+            *args,
+            **kwargs
+        )
+
+
+    def _v12_original_resolve_followup(self, message):
 
         if not message:
             return message

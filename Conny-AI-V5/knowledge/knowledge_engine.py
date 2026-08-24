@@ -26,6 +26,27 @@ class KnowledgeEngine:
         self.knowledge.update(programming())
         self.knowledge.update(electronics())
         self.knowledge.update(operating_systems())
+        
+        # ==================================================
+        # CONNY CREATOR PERSONAL KNOWLEDGE
+        # ==================================================
+        # Custom knowledge intentionally kept in the
+        # KnowledgeEngine so it works with the existing
+        # offline knowledge pipeline.
+        
+        self.knowledge["carine bebe"] = {
+            "keywords": [
+                "carine bebe",
+                "carine",
+                "bebe"
+            ],
+            "answer": (
+                "CARINE BEBE is the current girlfriend of my creator, "
+                "and perhaps his future wife. She means so much to him, "
+                "and my creator loves her more than words can express. ❤️"
+            )
+        }
+
 
     # ==================================================
     # KEYWORD MATCHING
@@ -94,44 +115,60 @@ class KnowledgeEngine:
 
             score = self.score(text, data)
 
-            # Prefer the concept being directly asked about.
+            # --------------------------------------------------
+            # Direct-question boost
+            # --------------------------------------------------
+            # Give a strong preference to the concept that the
+            # user is actually asking about.
+            #
+            # Handles:
+            #   what is variable?
+            #   what is a variable?
+            #   what is the variable?
+            #   explain variable
+            #   explain what a variable is
+            #   explain what the variable is
+            #   define variable
+            # --------------------------------------------------
+
             if self._keyword_matches(text, concept):
 
-                normalized = text.replace(
-                    f"what a {concept} is",
-                    f"what {concept} is"
-                )
-
-                normalized = normalized.replace(
-                    f"what an {concept} is",
-                    f"what {concept} is"
-                )
-
-                normalized = normalized.replace(
-                    f"what the {concept} is",
-                    f"what {concept} is"
-                )
+                concept_pattern = re.escape(concept)
 
                 direct_patterns = [
-                    f"what is {concept}",
-                    f"what are {concept}",
-                    f"explain {concept}",
-                    f"explain what {concept} is",
-                    f"define {concept}",
-                    f"definition of {concept}",
+
+                    rf"\bwhat\s+is\s+(?:a|an|the)?\s*{concept_pattern}\b",
+
+                    rf"\bwhat\s+are\s+(?:the)?\s*{concept_pattern}\b",
+
+                    rf"\bexplain\s+(?:a|an|the)?\s*{concept_pattern}\b",
+
+                    rf"\bexplain\s+what\s+(?:a|an|the)?\s*{concept_pattern}\s+is\b",
+
+                    rf"\bdefine\s+(?:a|an|the)?\s*{concept_pattern}\b",
+
+                    rf"\bdefinition\s+of\s+(?:a|an|the)?\s*{concept_pattern}\b",
                 ]
 
-                if any(pattern in normalized for pattern in direct_patterns):
+                if any(
+                    re.search(pattern, text)
+                    for pattern in direct_patterns
+                ):
+
                     score += 20
+
+            # --------------------------------------------------
+            # Best concept
+            # --------------------------------------------------
+
             if score > best_score:
+
                 best_score = score
                 best_name = concept
                 best_data = data
 
             elif score == best_score and score > 0:
 
-                # Prefer a concept whose actual name
-                # appears in the user's question.
                 concept_match = self._keyword_matches(
                     text,
                     concept
@@ -156,7 +193,6 @@ class KnowledgeEngine:
             "data": best_data,
             "score": best_score
         }
-
     # ==================================================
     # SEARCH
     # ==================================================

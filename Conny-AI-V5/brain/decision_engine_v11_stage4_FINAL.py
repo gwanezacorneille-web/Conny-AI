@@ -600,59 +600,6 @@ class DecisionEngine:
             )
 
         # ==============================================
-        # V11 STAGE 5 — EXPLICIT CREATIVE PROTECTION
-        #
-        # Creative requests containing programming terms
-        # must remain creative.
-        # ==============================================
-
-        lower_text = text.lower().strip()
-
-        creative_signals = (
-            # Stories
-            "write me a story",
-            "write a story",
-            "tell me a story",
-            "tell me a funny story",
-            "create a story",
-            "make a story",
-            "make up a story",
-
-            # Poems
-            "write me a poem",
-            "write a poem",
-            "create a poem",
-            "make a poem",
-            "make up a poem",
-
-            # Songs
-            "write me a song",
-            "write a song",
-            "create a song",
-            "make a song",
-
-            # Jokes / humor
-            "tell me a joke",
-            "tell me something funny",
-            "tell me a funny joke",
-            "make a joke",
-            "make me a joke",
-            "write me a joke",
-            "write a joke",
-            "create a joke",
-            "give me a joke",
-        )
-
-        if any(
-            signal in lower_text
-            for signal in creative_signals
-        ):
-            return self._set_result(
-                "creative",
-                1.0
-            )
-
-        # ==============================================
         # CODING OVERRIDE
         #
         # Coding requests must override generic
@@ -876,72 +823,17 @@ class DecisionEngine:
         text = text.lower().strip()
 
         # ==================================================
-        # V11 STAGE 5 — PRECISION CODING DETECTION
+        # V11 STAGE 4 — CODING PRECISION
         #
-        # A programming language alone is NOT enough.
-        # Generic creative requests are NOT coding.
-        # Comparisons are NOT coding.
-        # Debugging/failure questions ARE coding.
+        # A programming language or programming term alone
+        # must NEVER make a request a coding request.
+        #
+        # Coding requires an explicit construction or
+        # debugging action.
         # ==================================================
 
-        # --------------------------------------------------
-        # Comparison protection
-        # --------------------------------------------------
-
-        comparison_signals = (
-            " vs ",
-            " versus ",
-            "compare ",
-            "difference between ",
-            "which is better ",
-            "what is better ",
-            "which language is better ",
-            "what language is better ",
-            "which programming language is better ",
-            "what programming language is better ",
-        )
-
-        if any(
-            signal in f" {text} "
-            for signal in comparison_signals
-        ):
-            return False
-
-        # --------------------------------------------------
-        # Creative protection
-        # --------------------------------------------------
-
-        creative_signals = (
-            "write me a story",
-            "write a story",
-            "tell me a story",
-            "create a story",
-            "make a story",
-            "write me a poem",
-            "write a poem",
-            "create a poem",
-            "make a poem",
-            "write me a song",
-            "write a song",
-            "create a song",
-            "make a song",
-            "write me a joke",
-            "write a joke",
-            "create a joke",
-            "make a joke",
-        )
-
-        if any(
-            signal in text
-            for signal in creative_signals
-        ):
-            return False
-
-        # --------------------------------------------------
-        # Explicit coding construction
-        # --------------------------------------------------
-
         coding_phrases = (
+            # Construction
             "write code",
             "generate code",
             "create code",
@@ -957,9 +849,6 @@ class DecisionEngine:
             "make program",
             "build program",
 
-            "code for",
-            "program for",
-
             "write a function",
             "create a function",
             "make a function",
@@ -968,22 +857,45 @@ class DecisionEngine:
             "create a script",
             "make a script",
 
-            "debug",
+            "code for",
+            "program for",
+
+            # Debugging
+            "debug this",
+            "debug my",
+            "debug the",
             "fix this code",
             "fix my code",
+            "fix the code",
             "find the bug",
+            "find the error in",
             "syntax error",
+
+            "code not work",
+            "code does not work",
+            "code doesn't work",
+            "program not work",
+            "program does not work",
+            "program doesn't work",
+            "script not work",
+            "script does not work",
+            "script doesn't work",
         )
 
+        # Explicit coding construction/debugging request.
         if any(
             phrase in text
             for phrase in coding_phrases
         ):
             return True
 
-        # --------------------------------------------------
-        # Language + programming action
-        # --------------------------------------------------
+        # ==================================================
+        # Language + EXPLICIT coding verb
+        #
+        # Do NOT include generic programming nouns such as
+        # "function", "program", "script", or "code" here.
+        # Those nouns can appear in educational questions.
+        # ==================================================
 
         languages = (
             "python",
@@ -998,7 +910,7 @@ class DecisionEngine:
             "shell",
         )
 
-        actions = (
+        construction_actions = (
             "write",
             "create",
             "make",
@@ -1006,67 +918,49 @@ class DecisionEngine:
             "generate",
         )
 
+        debugging_actions = (
+            "debug",
+            "fix",
+        )
+
         has_language = any(
             language in text
             for language in languages
         )
 
-        has_action = any(
+        has_construction_action = any(
             action in text
-            for action in actions
+            for action in construction_actions
         )
 
-        if has_language and has_action:
+        has_debugging_action = any(
+            action in text
+            for action in debugging_actions
+        )
+
+        # A language + explicit construction verb is coding.
+        if has_language and has_construction_action:
             return True
 
-        # --------------------------------------------------
-        # Language + explicit failure/debug context
-        # --------------------------------------------------
-
-        programming_context = (
-            "code",
-            "program",
-            "script",
-            "function",
-            "class",
-        )
-
-        failure_signals = (
-            "not work",
-            "doesn't work",
-            "does not work",
-            "isn't working",
-            "isnt working",
-            "not working",
-            "failing",
-            "failed",
-            "failure",
-            "broken",
-            "bug",
-            "error",
-            "crash",
-            "crashing",
-        )
-
-        has_context = any(
-            item in text
-            for item in programming_context
-        )
-
-        has_failure = any(
-            signal in text
-            for signal in failure_signals
-        )
-
-        if (
-            has_language
-            and has_context
-            and has_failure
-        ):
-            return True
+        # A language + debugging verb is coding only when the
+        # request is actually about code/program/script behavior.
+        if has_language and has_debugging_action:
+            if any(
+                term in text
+                for term in (
+                    "code",
+                    "program",
+                    "script",
+                    "bug",
+                    "error",
+                    "syntax",
+                    "work",
+                    "working",
+                )
+            ):
+                return True
 
         return False
-
 
     # ==================================================
     # SET RESULT
