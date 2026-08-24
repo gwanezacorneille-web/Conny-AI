@@ -2,5 +2,7 @@ services:
   - type: web
     name: conny-ai-v12
     runtime: python
+    rootDir: Conny-AI-V5
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn web.backend.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/health
