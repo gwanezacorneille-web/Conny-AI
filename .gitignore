@@ -58,3 +58,51 @@ Conny-AI-V5/**/*.bak
 # Development backup/source snapshots
 Conny-AI-V5/**/*_before_*.py
 Conny-AI-V5/**/*_before_*
+
+# ============================================================
+# CONNY AI PRODUCTION ARTIFACT PROTECTION
+# ============================================================
+
+# V13 backups / snapshots / archives
+Conny-AI-V5/v13/**/*BACKUP*/
+Conny-AI-V5/v13/**/*BACKUP*
+Conny-AI-V5/v13/**/*.tar.gz
+Conny-AI-V5/v13/**/*.zip
+Conny-AI-V5/v13/**/*backup*
+Conny-AI-V5/v13/**/*_backup*
+Conny-AI-V5/v13/**/*before*
+Conny-AI-V5/v13/**/*before-*
+Conny-AI-V5/v13/**/*.pre-*
+
+# Android build output
+CONNY-ANDROID/.gradle/
+CONNY-ANDROID/build/
+CONNY-ANDROID/app/build/
+CONNY-ANDROID/android/
+CONNY-ANDROID/local.properties
+
+# APK / AAB
+CONNY-ANDROID/*.apk
+CONNY-ANDROID/**/*.apk
+CONNY-ANDROID/*.aab
+CONNY-ANDROID/**/*.aab
+
+# Android API local environment/logs
+CONNY-ANDROID/api/.venv/
+CONNY-ANDROID/api/*.log
+CONNY-ANDROID/api/*.before-*
+CONNY-ANDROID/*.log
+
+# Signing material
+keystore/
+*.jks
+*.keystore
+
+# Local archives/packages
+*.deb
+*.zip
+*.tar.gz
+
+# Project backup directories
+*BACKUP*/
+*BACKUP-*/

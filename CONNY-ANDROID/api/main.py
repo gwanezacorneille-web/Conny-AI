@@ -1,175 +1,108 @@
-from pathlib import Path
+from __future__ import annotations
+
 import os
 import sys
-import threading
 import uuid
+from pathlib import Path
 
-from fastapi import FastAPI, Header
+from fastapi import FastAPI
 from pydantic import BaseModel
 
 
-CORE_PATH = Path(r"/home/conny_the_miz/Conny-AI/Conny-AI-V5-V13-BACKUP-20260827-231231").resolve()
+API_DIR = Path(__file__).resolve().parent
+REPO_ROOT = API_DIR.parents[1]
 
-if not CORE_PATH.is_dir():
-    raise FileNotFoundError(
-        f"CONNY V13 core not found: {CORE_PATH}"
-    )
+V13_PATH = REPO_ROOT / "Conny-AI-V5" / "v13"
+CORE_PATH = REPO_ROOT / "Conny-AI-V5"
 
-if str(CORE_PATH) not in sys.path:
-    sys.path.insert(0, str(CORE_PATH))
+for path in (V13_PATH, CORE_PATH):
+    value = str(path)
+    if value not in sys.path:
+        sys.path.insert(0, value)
+
+os.environ["CONNY_CORE_PATH"] = str(CORE_PATH)
+
+from bridge.conny_bridge import ConnyBridge
 
 
 app = FastAPI(
-    title="CONNY AI",
-    version="V13",
+    title="CONNY AI API",
+    version="13.0",
 )
 
-
-_brains = {}
-_brains_lock = threading.Lock()
-
-
-def get_brain(session_id: str):
-    session_id = (session_id or "anonymous").strip()
-
-    with _brains_lock:
-        if session_id not in _brains:
-            from brain.brain import Brain
-
-            old_cwd = Path.cwd()
-
-            try:
-                os.chdir(CORE_PATH)
-                brain = Brain()
-                _brains[session_id] = brain
-            finally:
-                os.chdir(old_cwd)
-
-        return _brains[session_id]
-
-
-def process_brain(brain, message: str):
-    old_cwd = Path.cwd()
-
-    try:
-        os.chdir(CORE_PATH)
-
-        if hasattr(brain, "process"):
-            return brain.process(message)
-
-        if hasattr(brain, "respond"):
-            return brain.respond(message)
-
-        if hasattr(brain, "run"):
-            return brain.run(message)
-
-        raise AttributeError(
-            "CONNY Brain has no process/respond/run interface"
-        )
-
-    finally:
-        os.chdir(old_cwd)
+bridge = ConnyBridge()
 
 
 class ChatRequest(BaseModel):
     message: str
+    session_id: str | None = None
+
+
+class ChatResponse(BaseModel):
+    text: str
+    success: bool
+    session_id: str
+    version: str
 
 
 @app.get("/")
 def root():
     return {
-        "app": "CONNY AI",
-        "version": "V13",
+        "name": "CONNY AI",
         "status": "online",
+        "version": "13.0",
     }
 
 
 @app.get("/api/health")
 def health():
     return {
-        "status": "ok",
-        "brain": "online",
-        "version": "V13",
+        "status": "healthy",
+        "service": "CONNY AI API",
+        "version": "13.0",
     }
 
 
-@app.post("/api/chat")
-def chat(
-    request: ChatRequest,
-    x_session_id: str | None = Header(
-        default=None,
-        alias="X-Session-ID",
-    ),
-):
+@app.post("/api/chat", response_model=ChatResponse)
+def chat(request: ChatRequest):
     message = request.message.strip()
+    session_id = request.session_id or str(uuid.uuid4())
 
     if not message:
-        return {
-            "response": "Please enter a message.",
-            "success": False,
-            "version": "V13",
-        }
-
-    session_id = x_session_id or str(uuid.uuid4())
-
-    try:
-        brain = get_brain(session_id)
-
-        response = process_brain(
-            brain,
-            message,
+        return ChatResponse(
+            text="Please enter a question.",
+            success=False,
+            session_id=session_id,
+            version="13.0",
         )
 
-        if response is None:
-            response = ""
+    try:
+        answer = bridge.process(message)
 
-        response = str(response).strip()
+        if not isinstance(answer, str):
+            answer = str(answer)
 
-        if not response:
-            return {
-                "response": "CONNY returned an empty response.",
-                "success": False,
-                "intent": getattr(
-                    brain,
-                    "last_intent",
-                    None,
-                ),
-                "decision": getattr(
-                    brain,
-                    "last_decision",
-                    None,
-                ),
-                "session_id": session_id,
-                "version": "V13",
-            }
+        return ChatResponse(
+            text=answer,
+            success=True,
+            session_id=session_id,
+            version="13.0",
+        )
 
-        return {
-            "response": response,
-            "success": True,
-            "intent": getattr(
-                brain,
-                "last_intent",
-                None,
-            ),
-            "decision": getattr(
-                brain,
-                "last_decision",
-                None,
-            ),
-            "session_id": session_id,
-            "version": "V13",
-        }
+    except Exception:
+        return ChatResponse(
+            text="CONNY AI could not process that request right now.",
+            success=False,
+            session_id=session_id,
+            version="13.0",
+        )
 
-    except Exception as exc:
-        import traceback
 
-        traceback.print_exc()
+if __name__ == "__main__":
+    import uvicorn
 
-        return {
-            "response": "CONNY encountered an internal error.",
-            "success": False,
-            "error_type": type(exc).__name__,
-            "error": str(exc),
-            "session_id": session_id,
-            "version": "V13",
-        }
+    uvicorn.run(
+        "main:app",
+        host="0.0.0.0",
+        port=int(os.environ.get("PORT", "8000")),
+    )

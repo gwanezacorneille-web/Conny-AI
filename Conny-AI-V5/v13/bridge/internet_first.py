@@ -1,0 +1,699 @@
+from __future__ import annotations
+
+import json
+import re
+import urllib.parse
+import urllib.request
+from html import unescape
+
+
+USER_AGENT = (
+    "Mozilla/5.0 (X11; Linux x86_64) "
+    "AppleWebKit/537.36 Chrome/151 Safari/537.36"
+)
+
+
+def _request(url, timeout=10):
+    req = urllib.request.Request(
+        url,
+        headers={
+            "User-Agent": USER_AGENT,
+            "Accept": "text/html,application/json",
+        },
+    )
+
+    with urllib.request.urlopen(req, timeout=timeout) as response:
+        return response.read().decode(
+            "utf-8",
+            errors="ignore",
+        )
+
+
+def _clean_html(text):
+    if not text:
+        return ""
+
+    text = re.sub(
+        r"<script[^>]*>.*?</script>",
+        " ",
+        text,
+        flags=re.I | re.S,
+    )
+
+    text = re.sub(
+        r"<style[^>]*>.*?</style>",
+        " ",
+        text,
+        flags=re.I | re.S,
+    )
+
+    text = re.sub(
+        r"<noscript[^>]*>.*?</noscript>",
+        " ",
+        text,
+        flags=re.I | re.S,
+    )
+
+    text = re.sub(
+        r"<[^>]+>",
+        " ",
+        text,
+    )
+
+    text = unescape(text)
+
+    text = re.sub(
+        r"\s+",
+        " ",
+        text,
+    )
+
+    return text.strip()
+
+
+def _clean_sentence(text):
+    text = _clean_html(text)
+
+    text = re.sub(
+        r"\bA\s+A\b",
+        " ",
+        text,
+        flags=re.I,
+    )
+
+    text = re.sub(
+        r"https?://\S+",
+        "",
+        text,
+    )
+
+    text = re.sub(
+        r"\s+",
+        " ",
+        text,
+    )
+
+    return text.strip(" -–—|")
+
+
+def _topic_words(question):
+    stop = {
+        "what",
+        "is",
+        "are",
+        "was",
+        "were",
+        "the",
+        "a",
+        "an",
+        "of",
+        "to",
+        "for",
+        "in",
+        "on",
+        "and",
+        "or",
+        "how",
+        "why",
+        "who",
+        "does",
+        "do",
+        "can",
+        "tell",
+        "me",
+        "about",
+        "explain",
+        "define",
+        "definition",
+    }
+
+    words = re.findall(
+        r"[a-zA-Z0-9][a-zA-Z0-9_-]*",
+        question.lower(),
+    )
+
+    return [
+        word
+        for word in words
+        if word not in stop and len(word) > 1
+    ]
+
+
+def is_local_request(question):
+    q = str(question or "").lower().strip()
+
+    local_markers = (
+        "my computer",
+        "my laptop",
+        "my pc",
+        "this computer",
+        "this laptop",
+        "my wifi",
+        "my wi-fi",
+        "my battery",
+        "my screen",
+        "my keyboard",
+        "my mouse",
+        "my microphone",
+        "my speaker",
+        "my printer",
+        "my arduino",
+        "my usb",
+        "my disk",
+        "my hard drive",
+        "my ssd",
+        "my hdd",
+        "linux command",
+        "terminal command",
+        "open the",
+        "close the",
+        "launch the",
+        "restart my",
+        "shutdown my",
+    )
+
+    return any(marker in q for marker in local_markers)
+
+
+def _wikipedia_search(question):
+    """
+    Reliable knowledge source.
+
+    This is still part of the PRIMARY web path.
+    It is not a second CONNY routing path.
+    """
+
+    try:
+        params = urllib.parse.urlencode({
+            "action": "query",
+            "list": "search",
+            "srsearch": question,
+            "format": "json",
+            "utf8": "1",
+            "srlimit": "5",
+        })
+
+        url = (
+            "https://en.wikipedia.org/w/api.php?"
+            + params
+        )
+
+        raw = _request(url)
+
+        data = json.loads(raw)
+
+        results = data.get(
+            "query",
+            {},
+        ).get(
+            "search",
+            [],
+        )
+
+        output = []
+
+        for item in results:
+            title = _clean_sentence(
+                item.get("title", "")
+            )
+
+            snippet = _clean_sentence(
+                item.get("snippet", "")
+            )
+
+            if title and snippet:
+                output.append({
+                    "title": title,
+                    "snippet": snippet,
+                })
+
+        return output
+
+    except Exception as exc:
+        print(
+            "PRIMARY WEB Wikipedia:",
+            exc,
+        )
+        return []
+
+
+def _wikipedia_summary(title):
+    try:
+        encoded = urllib.parse.quote(
+            title.replace(" ", "_"),
+            safe="()_",
+        )
+
+        url = (
+            "https://en.wikipedia.org/api/rest_v1/page/summary/"
+            + encoded
+        )
+
+        raw = _request(url)
+
+        data = json.loads(raw)
+
+        extract = _clean_sentence(
+            data.get("extract", "")
+        )
+
+        return extract
+
+    except Exception as exc:
+        print(
+            "PRIMARY WEB Wikipedia summary:",
+            exc,
+        )
+        return ""
+
+
+def _duckduckgo_search(question):
+    """
+    General/current web search.
+
+    Returns clean source information only.
+    """
+
+    try:
+        params = urllib.parse.urlencode({
+            "q": question,
+        })
+
+        url = (
+            "https://html.duckduckgo.com/html/?"
+            + params
+        )
+
+        html = _request(url)
+
+        results = []
+
+        pattern = re.compile(
+            r'class="result__a"[^>]*href="([^"]+)"[^>]*>'
+            r'(.*?)</a>',
+            flags=re.I | re.S,
+        )
+
+        for match in pattern.finditer(html):
+            href = unescape(match.group(1))
+            title = _clean_sentence(match.group(2))
+
+            if not title:
+                continue
+
+            if href.startswith("//"):
+                href = "https:" + href
+
+            results.append({
+                "title": title,
+                "url": href,
+            })
+
+            if len(results) >= 8:
+                break
+
+        return results
+
+    except Exception as exc:
+        print(
+            "PRIMARY WEB DuckDuckGo:",
+            exc,
+        )
+        return []
+
+
+def _search(question):
+    """
+    ONE PRIMARY WEB ENGINE.
+
+    Multiple providers may be used internally,
+    but CONNY has only ONE routing path.
+    """
+
+    words = _topic_words(question)
+
+    wiki = _wikipedia_search(question)
+
+    sources = []
+
+    for item in wiki:
+        title = item.get("title", "")
+        snippet = item.get("snippet", "")
+
+        score = 0
+
+        title_low = title.lower()
+        snippet_low = snippet.lower()
+
+        for word in words:
+            if word in title_low:
+                score += 5
+
+            if word in snippet_low:
+                score += 2
+
+        summary = _wikipedia_summary(title)
+
+        if summary:
+            for word in words:
+                if word in summary.lower():
+                    score += 1
+
+        sources.append({
+            "title": title,
+            "snippet": snippet,
+            "summary": summary,
+            "score": score,
+        })
+
+    ddg = _duckduckgo_search(question)
+
+    for item in ddg:
+        title = item.get("title", "")
+
+        score = 0
+        title_low = title.lower()
+
+        for word in words:
+            if word in title_low:
+                score += 3
+
+        sources.append({
+            "title": title,
+            "snippet": "",
+            "summary": "",
+            "score": score,
+        })
+
+    sources.sort(
+        key=lambda x: x.get("score", 0),
+        reverse=True,
+    )
+
+    return sources
+
+
+def _best_content(question, sources):
+    words = _topic_words(question)
+
+    candidates = []
+
+    for source in sources:
+        title = source.get("title", "")
+        snippet = source.get("snippet", "")
+        summary = source.get("summary", "")
+
+        for text in (summary, snippet):
+            text = _clean_sentence(text)
+
+            if not text:
+                continue
+
+            if len(text) < 35:
+                continue
+
+            low = text.lower()
+
+            score = 0
+
+            for word in words:
+                if word in low:
+                    score += 2
+
+            if summary and text == summary:
+                score += 5
+
+            candidates.append(
+                (score, text)
+            )
+
+    candidates.sort(
+        key=lambda x: x[0],
+        reverse=True,
+    )
+
+    unique = []
+
+    for score, text in candidates:
+        normalized = re.sub(
+            r"\W+",
+            " ",
+            text.lower(),
+        ).strip()
+
+        if not normalized:
+            continue
+
+        duplicate = False
+
+        for existing in unique:
+            existing_norm = re.sub(
+                r"\W+",
+                " ",
+                existing.lower(),
+            ).strip()
+
+            if normalized == existing_norm:
+                duplicate = True
+                break
+
+        if not duplicate:
+            unique.append(text)
+
+    return unique[:5]
+
+
+def _format_answer(question, sources):
+    content = _best_content(
+        question,
+        sources,
+    )
+
+    if not content:
+        return None
+
+    q = question.lower()
+
+    definition_question = (
+        q.startswith("what is ")
+        or q.startswith("what are ")
+        or q.startswith("define ")
+        or "definition of" in q
+        or q.startswith("explain ")
+    )
+
+    if definition_question:
+        first = content[0]
+
+        answer = (
+            "## Definition\n"
+            + first
+            + "\n\n"
+            + "## Explanation\n"
+        )
+
+        explanation = []
+
+        for text in content[1:4]:
+            explanation.append(
+                "• " + text
+            )
+
+        if explanation:
+            answer += "\n".join(
+                explanation
+            )
+        else:
+            answer += "• " + first
+
+        answer += (
+            "\n\n"
+            "## Summary\n"
+            + first
+        )
+
+        return answer.strip()
+
+    answer = "## Answer\n"
+
+    for text in content[:4]:
+        answer += "• " + text + "\n"
+
+    answer += (
+        "\n## Summary\n"
+        + content[0]
+    )
+
+    return answer.strip()
+
+
+def _valid_answer(answer):
+    if not isinstance(answer, str):
+        return False
+
+    answer = answer.strip()
+
+    if not answer:
+        return False
+
+    low = answer.lower()
+
+    forbidden = (
+        "here are the top results i found online",
+        "search results:",
+        "duckduckgo",
+        "mediawiki error",
+        "search query:",
+        "debug search",
+        "related information what does",
+        "a a",
+    )
+
+    for marker in forbidden:
+        if marker in low:
+            return False
+
+    if len(answer) < 40:
+        return False
+
+    return True
+
+
+def answer_online(question, context=None):
+    """
+    PUBLIC PRIMARY WEB API.
+
+    Returns a clean answer or None.
+
+    It never returns raw search-result pages.
+    """
+
+    question = str(
+        question or ""
+    ).strip()
+
+    if not question:
+        return None
+
+    try:
+        print(
+            "PRIMARY WEB: SEARCH",
+            question,
+        )
+
+        sources = _search(question)
+
+        if not sources:
+            print(
+                "PRIMARY WEB: NO SOURCES"
+            )
+            return None
+
+        answer = _format_answer(
+            question,
+            sources,
+        )
+
+        if not _valid_answer(answer):
+            print(
+                "PRIMARY WEB: INVALID ANSWER"
+            )
+            return None
+
+        # Final cleanup.
+        answer = re.sub(
+            r"https?://\S+",
+            "",
+            answer,
+        )
+
+        answer = re.sub(
+            r"\bA\s+A\b",
+            " ",
+            answer,
+            flags=re.I,
+        )
+
+        answer = re.sub(
+            r"\s+",
+            " ",
+            answer,
+        )
+
+        answer = answer.strip()
+
+        print(
+            "PRIMARY WEB: SUCCESS"
+        )
+
+        return answer or None
+
+    except Exception as exc:
+        print(
+            "PRIMARY WEB ERROR:",
+            exc,
+        )
+        return None
+
+
+def internet_answer(question: str, context=None):
+    """
+    Compatibility API used by V13 bridge.
+    """
+
+    return answer_online(
+        question,
+        context,
+    )
+
+
+__all__ = [
+    "answer_online",
+    "internet_answer",
+    "is_local_request",
+]
+
+
+# ============================================================
+
+
+# CONNY FINAL ANSWER QUALITY LAYER
+
+from .answer_guard import guard_answer as _conny_guard_answer
+
+_conny_original_answer_online = answer_online
+
+
+def answer_online(question, context=None):
+    try:
+        raw = _conny_original_answer_online(
+            question,
+            context,
+        )
+    except Exception:
+        raw = None
+
+    # If the web provider fails completely, use the
+    # high-confidence local knowledge layer.
+    if not isinstance(raw, str) or not raw.strip():
+        local = _conny_guard_answer(
+            question,
+            "",
+        )
+
+        if local and local.strip():
+            return local
+
+        return raw
+
+    return _conny_guard_answer(
+        question,
+        raw,
+    )
+
+
+def internet_answer(question: str, context=None):
+    return answer_online(
+        question,
+        context,
+    )
