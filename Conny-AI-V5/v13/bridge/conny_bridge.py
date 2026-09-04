@@ -124,6 +124,116 @@ def _local_brain(question):
         return "I couldn't answer that right now."
 
 
+
+def _local_core_definition(question):
+    """
+    Small deterministic definitions for concepts where generic
+    web search commonly selects a subtype instead of the topic.
+    These are part of the shared V13 bridge, so Web/Desktop/Android
+    receive the same answer.
+    """
+    import re
+
+    q = question.strip().lower()
+
+    if re.fullmatch(r"what\s+is\s+(a\s+)?diode\??", q):
+        return (
+            '## Definition\n'
+            'A diode is an electronic component that allows electric '
+            'current to flow mainly in one direction while opposing '
+            'current flow in the opposite direction.\n\n'
+            '## Explanation\n'
+            'A diode is made from semiconductor material and has two '
+            'terminals, called the anode and cathode. Its one-way '
+            'current behavior makes it useful for rectifying AC into DC, '
+            'protecting circuits from incorrect polarity, switching, '
+            'and controlling electrical signals.\n\n'
+            '## Example\n'
+            'A diode can be used in a power supply to convert alternating '
+            'current into direct current.'
+        )
+
+    if re.fullmatch(r"what\s+is\s+python\??", q):
+        return (
+            '## Definition\n'
+            'Python is a high-level, general-purpose programming language '
+            'known for its readable syntax and wide range of applications.\n\n'
+            '## Uses\n'
+            'Python is commonly used for web development, automation, '
+            'data analysis, artificial intelligence, scientific computing, '
+            'and software development.\n\n'
+            '## Example\n'
+            'A simple Python program can process data, automate a task, '
+            'or perform a calculation.'
+        )
+
+    return None
+
+
+def _local_article_answer(question):
+    """
+    Deterministic English indefinite-article knowledge.
+
+    These questions must bypass web search because terms such as
+    apple, university, and hour are ordinary search terms.
+    """
+    import re
+
+    q = question.strip()
+
+    # Which is correct: a apple or an apple?
+    match = re.search(
+        r"which\s+is\s+correct\s*:\s*(?:a|an)\s+([a-zA-Z][a-zA-Z-]*)"
+        r"\s+or\s+(?:a|an)\s+\1\s*\??",
+        q,
+        re.IGNORECASE,
+    )
+
+    if match:
+        word = match.group(1)
+
+        # Ensure the real CONNY core is importable before loading
+        # LanguageEngine. This is required when the bridge is used
+        # by Android/Web outside the desktop working directory.
+        core_root = Path(__file__).resolve().parents[2]
+        import sys
+
+        core_root_str = str(core_root)
+
+        if core_root_str not in sys.path:
+            sys.path.insert(0, core_root_str)
+
+        from brain.language.language_engine import LanguageEngine
+
+        engine = LanguageEngine()
+        article = engine.indefinite_article(word)
+
+        return (
+            f'The correct form is "{article} {word}". '
+            f'We use "{article}" because the choice depends on the '
+            f'sound at the beginning of the word, not simply the first letter.'
+        )
+
+    lower = q.lower()
+
+    # General a/an rule
+    if re.search(r"\bwhen\s+do\s+we\s+use\s+(?:a|an)\b", lower):
+        return (
+            'We use "a" before a consonant sound and "an" before a vowel sound. '
+            'Examples: "a book", "a university", "an apple", and "an hour". '
+            'The rule is based on pronunciation, not simply the first written letter.'
+        )
+
+    # Why an hour?
+    if re.search(r"\bwhy\s+do\s+we\s+say\s+an\s+hour\b", lower):
+        return (
+            'We say "an hour" because the "h" in "hour" is silent. '
+            'The word begins with a vowel sound, so "an" is used.'
+        )
+
+    return None
+
+
 def process(message: str) -> str:
     global _last_source
 
@@ -135,6 +245,25 @@ def process(message: str) -> str:
     if not question:
         _last_source = "local"
         return "Please enter a question."
+
+    # --------------------------------------------------------
+    # DETERMINISTIC LANGUAGE KNOWLEDGE
+    # --------------------------------------------------------
+    # Grammar rules such as a/an should never be sent to
+    # Internet search first.
+    # Shared V13 concept definitions take priority over internet
+    # extraction when the question has a known deterministic answer.
+    core_definition = _local_core_definition(question)
+
+    if core_definition:
+        _last_source = "local"
+        return repair_response(question, core_definition)
+
+    article_result = _local_article_answer(question)
+
+    if article_result:
+        _last_source = "local"
+        return repair_response(question, article_result)
 
     # --------------------------------------------------------
     # LOCAL REQUESTS → LOCAL BRAIN

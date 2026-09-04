@@ -33,8 +33,13 @@ class CoreRuntime:
 
         root = str(self.core_path)
 
-        if root not in sys.path:
-            sys.path.insert(0, root)
+        # Keep the real CONNY core root available for the entire
+        # lifetime of the V13 process.  LanguageEngine and other
+        # core modules may be imported after the first request.
+        if root in sys.path:
+            sys.path.remove(root)
+
+        sys.path.insert(0, root)
 
         os.environ["CONNY_CORE_PATH"] = root
 

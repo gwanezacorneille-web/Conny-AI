@@ -94,6 +94,24 @@ class OnlineBody:
             self.online = False
 
             return False
+        # ==================================================
+        # ONLINE SERVICES
+        # ==================================================
+
+        self.search = SearchEngine()
+        self.news = NewsEngine()
+        self.wiki = WikiEngine()
+        self.weather = WeatherEngine()
+
+        # ==================================================
+        # STATE
+        # ==================================================
+
+        self.last_query = ""
+        self.last_result = None
+        self.last_service = None
+
+        self.online = self.check_connection()
 
     # ======================================================
     # MAIN ONLINE PROCESSOR
@@ -458,27 +476,16 @@ class OnlineBody:
             or text.startswith("find online ")
 
             # ------------------------------------------
-            # General factual questions
+            # General information questions
+            #
+            # These are used when local knowledge
+            # cannot answer the request and the Router
+            # falls back to the Online Body.
             # ------------------------------------------
 
             or text.startswith("who is ")
-            or text.startswith("who wrote ")
-            or text.startswith("who directed ")
-
             or text.startswith("what is ")
             or text.startswith("what are ")
-            or text.startswith("what does ")
-            or text.startswith("what was ")
-
-            or text.startswith("which country ")
-            or text.startswith("which ")
-
-            or text.startswith("how many ")
-
-            or text.startswith("in what year ")
-            or text.startswith("what year ")
-            or text.startswith("when did ")
-
             or text.startswith("tell me about ")
             or text.startswith("where is ")
             or text.startswith("how does ")
@@ -486,9 +493,10 @@ class OnlineBody:
             or text.startswith("why is ")
             or text.startswith("why does ")
         )
-        # ======================================================
-        # NEWS DETECTION
-        # ======================================================
+
+    # ======================================================
+    # NEWS DETECTION
+    # ======================================================
 
     def _is_news_request(self, text):
 

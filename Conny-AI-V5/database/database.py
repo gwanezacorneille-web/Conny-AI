@@ -1,7 +1,10 @@
+from pathlib import Path
 import sqlite3
 
 
-DATABASE = "database/conny.db"
+DATABASE = str(
+    Path(__file__).resolve().parent / "conny.db"
+)
 
 
 class Database:

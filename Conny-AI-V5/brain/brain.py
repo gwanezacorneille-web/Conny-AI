@@ -231,40 +231,6 @@ class Brain:
 
                 lower = text.lower()
 
-                # ==================================================
-                # V12 DIRECT FOLLOW-UP RETURN
-                #
-                # ContextEngine may have already produced the
-                # actual answer to a personal follow-up such as:
-                #
-                # "My favorite project is CONNY AI."
-                # "What is my favorite project?"
-                #
-                # In that case, do NOT send the resolved answer
-                # back through the normal knowledge/search pipeline.
-                # Return it directly.
-                # ==================================================
-
-                if text != original_text:
-
-                    self.last_followup = True
-                    self.followup_depth += 1
-
-                    try:
-                        self.context.add_turn(
-                            original_text,
-                            text,
-                            intent="context_followup",
-                            decision="context"
-                        )
-                    except Exception as context_error:
-                        print(
-                            "DEBUG V12 Context Record Error:",
-                            context_error
-                        )
-
-                    return text
-
             except Exception as error:
 
                 print(

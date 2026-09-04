@@ -1,5 +1,6 @@
 import re
 
+
 from knowledge.domains.networking import get_knowledge as networking
 from knowledge.domains.computers import get_knowledge as computers
 from knowledge.domains.programming import get_knowledge as programming
@@ -26,14 +27,14 @@ class KnowledgeEngine:
         self.knowledge.update(programming())
         self.knowledge.update(electronics())
         self.knowledge.update(operating_systems())
-        
+
         # ==================================================
         # CONNY CREATOR PERSONAL KNOWLEDGE
         # ==================================================
         # Custom knowledge intentionally kept in the
         # KnowledgeEngine so it works with the existing
         # offline knowledge pipeline.
-        
+
         self.knowledge["carine bebe"] = {
             "keywords": [
                 "carine bebe",
@@ -47,6 +48,73 @@ class KnowledgeEngine:
             )
         }
 
+
+    # ==================================================
+    # A / AN LANGUAGE KNOWLEDGE
+    # ==================================================
+
+    def _article_answer(self, text):
+        """
+        Answer indefinite-article questions using the central
+        LanguageEngine.
+        """
+
+        normalized = text.lower().strip()
+
+        article_patterns = (
+            r"\ba\s+and\s+an\b",
+            r"\ban\s+and\s+a\b",
+            r"\ba/an\b",
+            r"\bindefinite\s+article",
+            r"\barticles?\s+a\s+and\s+an\b",
+            r"\bwhen\s+do\s+we\s+use\s+a\b",
+            r"\bwhen\s+do\s+we\s+use\s+an\b",
+            r"\bwhy\s+do\s+we\s+say\s+an\b",
+            r"\bwhy\s+do\s+we\s+say\s+a\b",
+            r"\bwhich\s+is\s+correct\b.*\b(a|an)\b",
+        )
+
+        if not any(
+            re.search(pattern, normalized)
+            for pattern in article_patterns
+        ):
+            return None
+
+        comparison = re.search(
+            r"\b(?:a|an)\s+([a-z][a-z'-]*)\b",
+            normalized
+        )
+
+        if comparison:
+            word = comparison.group(1)
+
+            if word not in {"and", "or"}:
+
+                language = LanguageEngine()
+                expected = language.indefinite_article(word)
+
+                return (
+                    f'The correct form is "{expected} {word}".\n\n'
+                    f'We use "{expected}" because the choice is '
+                    f'based on the sound at the beginning of "{word}", '
+                    f'not simply its first written letter.'
+                )
+
+        return (
+            'We use "a" before a consonant sound and "an" before '
+            'a vowel sound.\n\n'
+            'Examples:\n'
+            '- a camera\n'
+            '- a book\n'
+            '- a university\n'
+            '- a European country\n'
+            '- an apple\n'
+            '- an egg\n'
+            '- an hour\n'
+            '- an honest person\n\n'
+            'The rule is based on pronunciation, not just the '
+            'first written letter.'
+        )
 
     # ==================================================
     # KEYWORD MATCHING
@@ -198,6 +266,23 @@ class KnowledgeEngine:
     # ==================================================
 
     def search(self, text):
+
+        article_answer = self._article_answer(text)
+
+        if article_answer:
+            return {
+                "name": "a and an",
+                "data": {
+                    "answer": article_answer,
+                    "definition": article_answer,
+                    "keywords": [
+                        "a and an",
+                        "a/an",
+                        "indefinite article",
+                    ],
+                },
+                "score": 100,
+            }
 
         return self.find_concept(text)
 

@@ -148,6 +148,62 @@ def _question_terms(question: str) -> set[str]:
     }
 
 
+def _is_off_topic(sentence: str, question: str) -> bool:
+    s = sentence.lower()
+    q = str(question or "").lower().strip()
+
+    # --------------------------------------------------------
+    # Generic diode questions
+    # --------------------------------------------------------
+    if re.search(
+        r"\bwhat\s+is\s+(a\s+)?diode\b|\bdefine\s+(a\s+)?diode\b",
+        q,
+    ):
+        # Reject definitions that are actually about a subtype.
+        subtype_markers = (
+            "light-emitting diode",
+            "led ",
+            "led is",
+            "zener diode",
+            "schottky diode",
+            "pin diode",
+            "varicap diode",
+            "varactor diode",
+            "tunnel diode",
+            "photodiode",
+            "laser diode",
+            "organic light-emitting",
+        )
+
+        if any(term in s for term in subtype_markers):
+            return True
+
+    # --------------------------------------------------------
+    # Generic Python questions
+    # --------------------------------------------------------
+    if re.search(
+        r"\bwhat\s+is\s+python\b|\bdefine\s+python\b",
+        q,
+    ):
+        unrelated = (
+            "monty python",
+            "python's flying circus",
+            "john cleese",
+            "graham chapman",
+            "terry gilliam",
+            "terry jones",
+            "michael palin",
+            "anaconda,",
+            "anaconda inc",
+            "anaconda is",
+        )
+
+        if any(term in s for term in unrelated):
+            return True
+
+    return False
+
+
 def score_sentence(sentence: str, question: str) -> int:
     low = sentence.lower()
     terms = _question_terms(question)
@@ -212,6 +268,9 @@ def extract_main_answer(
 
         for sentence in split_sentences(material):
             if _looks_like_noise(sentence):
+                continue
+
+            if _is_off_topic(sentence, question):
                 continue
 
             score = score_sentence(

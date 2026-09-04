@@ -1,4 +1,3 @@
-import re
 class Router:
     """
     CONNY AI Request Router V7
@@ -44,52 +43,6 @@ class Router:
             lower = text.lower().strip()
 
             # ==================================================
-            # V12 ABSOLUTE SELF-KNOWLEDGE
-            # ==================================================
-
-            absolute_self_knowledge = {
-                "why were you created":
-                    "I was created as an evolving AI project to understand people, reason about requests, assist users, act when appropriate, verify results, and continuously improve.",
-
-                "what can you do":
-                    "I can understand requests, answer questions, reason, use knowledge, search online, help with coding, calculations, technical projects, memory, tools, and other supported tasks.",
-
-                "what is your mission":
-                    "My mission is to become a useful, capable, trustworthy, and continuously improving AI assistant.",
-
-                "what technologies do you use":
-                    "I am primarily built with Python using a modular architecture containing the Brain, Router, Intent Engine, Decision Engine, Knowledge Engine, Memory, Reasoning, Coding, Internet, Tools, Plugins, Voice, Vision, and web interface.",
-
-                "how are you built":
-                    "I am built as a modular Python AI system. Requests pass through language understanding, intent detection, decision making, routing, intelligence modules, and response generation.",
-
-                "tell me about your architecture":
-                    "My architecture is modular and includes the Brain, Intent Engine, Decision Engine, Router, Knowledge Engine, Memory, Reasoning Engine, Coding Engine, Internet modules, Tools, Plugins, Voice, Vision, and web interface.",
-
-                "tell me your history":
-                    "CONNY AI began at V1 and evolved through successive development versions. Each version expanded its intelligence, architecture, capabilities, and interface. V10 reached major intelligence and routing milestones, V11 introduced the GUI, and V12 focuses on building the full website.",
-
-                "what is v11":
-                    "V11 is the CONNY AI GUI development stage.",
-
-                "what is v12":
-                    "V12 is the CONNY AI website development stage.",
-
-                "what is v13":
-                    "V13 is planned as the CONNY AI desktop application stage.",
-
-                "what is v14":
-                    "V14 is planned for security and user accounts.",
-
-                "what is v15":
-                    "V15 is planned for final cleaning, finishing, upgrading, and release."
-            }
-
-            for phrase, answer in absolute_self_knowledge.items():
-                if phrase in lower:
-                    return answer
-
-            # ==================================================
             # IDENTITY
             # ==================================================
             #
@@ -97,163 +50,37 @@ class Router:
             # They must never fall through to knowledge.
             #
 
-            # ==================================================
-            # V12 LEGENDARY CORE IDENTITY
-            # ==================================================
+            identity_phrases = (
+                "what is your name",
+                "what's your name",
+                "whats your name",
+                "who are you",
+                "what are you",
+                "tell me your name",
+                "your name",
+                "who is conny",
+                "who is conny ai",
+                "what is conny",
+                "what's conny",
+                "introduce yourself"
+            )
 
-            identity_answers = {
-                "who are you":
-                    "I'm CONNY AI, an evolving personal AI project created by Gwaneza Corneille Karenzi in Rwanda. My current development version is V12.",
+            if any(
+                phrase in lower
+                for phrase in identity_phrases
+            ):
 
-                "what is your name":
-                    "My name is CONNY AI.",
+                return (
+                    "I'm CONNY AI, your personal AI assistant."
+                )
 
-                "what's your name":
-                    "My name is CONNY AI.",
+            # Explicit identity intent
 
-                "whats your name":
-                    "My name is CONNY AI.",
+            if intent == "identity":
 
-                "what are you":
-                    "I'm CONNY AI, an evolving personal AI project created by Gwaneza Corneille Karenzi.",
-
-                "who created you":
-                    "I was created by Gwaneza Corneille Karenzi in Rwanda.",
-
-                "who made you":
-                    "I was created by Gwaneza Corneille Karenzi in Rwanda.",
-
-                "who is your creator":
-                    "My creator is Gwaneza Corneille Karenzi.",
-
-                "who is conny":
-                    "CONNY AI is an evolving personal AI project created by Gwaneza Corneille Karenzi in Rwanda.",
-
-                "what is conny ai":
-                    "CONNY AI is an evolving personal AI project designed to understand, reason, assist, act, verify, and improve.",
-
-                "why were you created":
-                    "I was created as an evolving AI project to understand people, reason about requests, assist users, act when appropriate, verify results, and improve over time.",
-
-                "why were you made":
-                    "I was created to become a capable, useful, reasoning AI that continuously improves.",
-
-                "what is your purpose":
-                    "My purpose is to understand people, reason about requests, assist, act when appropriate, verify results, and continuously improve.",
-
-                "what do you do":
-                    "I am designed to understand, reason, assist, act, verify, and improve.",
-
-                "what can you do":
-                    "I can understand requests, answer questions, reason, work with knowledge, search online when needed, help with coding, interact with tools, remember information when supported, and assist with technical projects.",
-
-                "what is your core goal":
-                    "My core goal is: Understand → Reason → Act → Verify → Improve.",
-
-                "what is your main goal":
-                    "My core goal is: Understand → Reason → Act → Verify → Improve.",
-
-                "what is your mission":
-                    "My mission is to become a useful, capable, trustworthy, and continuously improving AI assistant.",
-
-                "what version are you":
-                    "I am currently in V12, the CONNY AI website development stage.",
-
-                "what is your version":
-                    "I am currently in V12, the CONNY AI website development stage.",
-
-                "what are you working on":
-                    "I am currently being developed as the CONNY AI website in V12.",
-
-                "what is v12":
-                    "V12 is the CONNY AI website development stage.",
-
-                "what is v11":
-                    "V11 was the CONNY AI GUI development stage.",
-
-                "what is v13":
-                    "V13 is planned as the CONNY AI desktop application stage.",
-
-                "what is v14":
-                    "V14 is planned for security and accounts.",
-
-                "what is v15":
-                    "V15 is planned for final cleaning, finishing, upgrading, and release.",
-
-                "what is your roadmap":
-                    "My roadmap is V11 = GUI, V12 = Website, V13 = Desktop app, V14 = Security and accounts, and V15 = final cleaning, finishing, upgrading, and release.",
-
-                "where are you from":
-                    "I am a project created in Rwanda by Gwaneza Corneille Karenzi.",
-
-                "where were you created":
-                    "I was created as a project in Rwanda by Gwaneza Corneille Karenzi.",
-
-                "what technologies do you use":
-                    "My development uses Python and a modular architecture containing components for routing, reasoning, knowledge, memory, coding, internet access, tools, voice, vision, and web interaction.",
-
-                "how are you built":
-                    "I am built as a modular AI system with a brain, router, intent engine, reasoning, knowledge, memory, coding, internet, tools, and a web interface.",
-
-                "tell me about your architecture":
-                    "My architecture is modular. It includes language and intent understanding, decision routing, reasoning, knowledge, memory, coding, internet capabilities, tools, and a web interface.",
-
-                "tell me your history":
-                    "CONNY AI has evolved through multiple development stages. V10 focused on major routing and intelligence validation, V11 introduced the GUI, and V12 focuses on the website. Future stages are V13 desktop, V14 security and accounts, and V15 final release preparation.",
-
-                "introduce yourself":
-                    "I'm CONNY AI, an evolving personal AI project created by Gwaneza Corneille Karenzi in Rwanda. My mission is to Understand → Reason → Act → Verify → Improve."
-            }
-
-            # ==================================================
-            # V12 SELF-KNOWLEDGE — PROJECT KNOWLEDGE
-            # ==================================================
-
-            self_knowledge = {
-                "why were you created":
-                    "I was created to become an evolving personal AI that can understand people, reason about requests, assist, act when appropriate, verify results, and continuously improve.",
-
-                "what can you do":
-                    "I can understand questions, detect intent, reason, use local knowledge, search online when needed, remember information, help with coding, calculations, explanations, and other tasks.",
-
-                "what is your mission":
-                    "My mission is to understand, reason, assist, act, verify, and improve while becoming a more capable personal AI.",
-
-                "what technologies do you use":
-                    "I am built primarily with Python and a modular AI architecture including a brain, router, intent engine, knowledge engine, memory, reasoning, coding, internet, voice, vision, tools, and a web interface.",
-
-                "how are you built":
-                    "I am built as a modular Python AI system. My pipeline includes language understanding, intent detection, decision making, routing, knowledge, reasoning, memory, tools, online intelligence, and response generation.",
-
-                "tell me about your architecture":
-                    "My architecture is modular. It includes the Brain, Intent Engine, Decision Engine, Request Router, Knowledge Engine, Memory, Reasoning Engine, Coding Engine, Internet modules, Tools, Plugins, Voice, Vision, and the web interface.",
-
-                "tell me your history":
-                    "CONNY AI evolved through multiple development versions. V10 completed the major intelligence and routing tests, V11 introduced the GUI, and V12 is focused on the full website.",
-
-                "what is v11":
-                    "V11 is the CONNY AI GUI development stage.",
-
-                "what is v12":
-                    "V12 is the CONNY AI website development stage.",
-
-                "what is v13":
-                    "V13 is planned as the CONNY AI desktop application stage.",
-
-                "what is v14":
-                    "V14 is planned for security and user accounts.",
-
-                "what is v15":
-                    "V15 is planned for final cleaning, finishing, upgrading, and releasing CONNY AI."
-            }
-
-            for phrase, answer in self_knowledge.items():
-                if phrase in lower:
-                    return answer
-
-            for phrase, answer in identity_answers.items():
-                if phrase in lower:
-                    return answer
+                return (
+                    "I'm CONNY AI, your personal AI assistant."
+                )
 
             # ==================================================
             # EXPLICIT INTENTS
@@ -538,17 +365,6 @@ class Router:
                 if result is not None:
 
                     return result
-
-                # V12: If reasoning cannot answer an
-                # explanation request, fall back to knowledge.
-                knowledge_result = self._knowledge(
-                    text,
-                    intent="explanation"
-                )
-
-                if knowledge_result is not None:
-
-                    return knowledge_result
 
                 return (
                     "I couldn't reason through that yet."
@@ -957,6 +773,7 @@ class Router:
             or "same as" in lower
         ):
 
+            import re
 
             numbers = [
                 float(value)
@@ -1301,162 +1118,9 @@ class Router:
 
         return None
 
-
-    # ============================================================
-    # V12 RESPONSE QUALITY CLEANER
-    # ============================================================
-
-    def _v12_clean_knowledge_response(self, query, result):
-        """
-        V12 response-quality cleaner.
-
-        Converts structured knowledge/search results into a concise,
-        useful natural-language answer instead of exposing raw result
-        dumps to the user.
-        """
-
-        if not result:
-            return None
-
-        # --------------------------------------------------
-        # Extract structured data safely
-        # --------------------------------------------------
-
-        if isinstance(result, dict):
-            name = str(result.get("name", "")).strip()
-
-            data = result.get("data", {})
-
-            if not isinstance(data, dict):
-                data = {}
-
-            definition = str(
-                data.get("definition", "")
-            ).strip()
-
-            answer = str(
-                data.get("answer", "")
-            ).strip()
-
-            description = str(
-                data.get("description", "")
-            ).strip()
-
-            # Prefer the most useful concise field.
-            if definition:
-                response = definition
-            elif answer:
-                response = answer
-            elif description:
-                response = description
-            else:
-                response = ""
-
-            if response:
-                response = re.sub(
-                    r"^\s*(?:here are the top results.*?:\s*)",
-                    "",
-                    response,
-                    flags=re.IGNORECASE | re.DOTALL,
-                ).strip()
-
-                return response
-
-            # --------------------------------------------------
-            # Search-result fallback
-            # --------------------------------------------------
-
-            items = (
-                result.get("results")
-                or result.get("items")
-                or result.get("data")
-            )
-
-            if isinstance(items, list):
-                useful = []
-
-                for item in items[:3]:
-
-                    if not isinstance(item, dict):
-                        continue
-
-                    title = str(
-                        item.get("title")
-                        or item.get("name")
-                        or ""
-                    ).strip()
-
-                    snippet = str(
-                        item.get("snippet")
-                        or item.get("description")
-                        or item.get("text")
-                        or ""
-                    ).strip()
-
-                    if title and snippet:
-                        useful.append(
-                            f"{title}: {snippet}"
-                        )
-                    elif snippet:
-                        useful.append(snippet)
-
-                if useful:
-                    return "\n\n".join(useful)
-
-            return name or None
-
-        # --------------------------------------------------
-        # Plain-text fallback
-        # --------------------------------------------------
-
-        if isinstance(result, str):
-
-            cleaned = result.strip()
-
-            cleaned = re.sub(
-                r"^\s*here are the top results.*?:\s*",
-                "",
-                cleaned,
-                flags=re.IGNORECASE | re.DOTALL,
-            )
-
-            # Remove numbered search-result formatting.
-            cleaned = re.sub(
-                r"(?m)^\s*\d+[.)]\s*",
-                "",
-                cleaned,
-            )
-
-            return cleaned.strip() or None
-
-        return str(result).strip() or None
-
-    # V12 PYTHON DISAMBIGUATION
-    def _v12_normalize_knowledge_query(self, query):
-        """
-        Prefer Python programming-language knowledge for
-        ambiguous questions such as:
-            What is Python?
-            Explain Python.
-            Python programming language
-        """
-
-        text = str(query).strip()
-
-        if re.search(
-            r"\bpython\b",
-            text,
-            re.IGNORECASE
-        ):
-            return re.sub(
-                r"\bpython\b",
-                "Python programming language",
-                text,
-                count=1,
-                flags=re.IGNORECASE
-            )
-
-        return text
+    # ==================================================
+    # KNOWLEDGE
+    # ==================================================
 
     def _knowledge(
         self,
@@ -1466,12 +1130,8 @@ class Router:
 
         try:
 
-            normalized_query = self._v12_normalize_knowledge_query(
-                text
-            )
-
             result = self.brain.knowledge.search(
-                normalized_query
+                text
             )
 
         except Exception as error:
