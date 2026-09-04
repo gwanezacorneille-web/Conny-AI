@@ -1,0 +1,141 @@
+name: CONNY AI V13 Windows Release
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Locate Windows V13 source
+        shell: pwsh
+        run: |
+          $root = Join-Path $env:GITHUB_WORKSPACE "CONNY-WINDOWS-V13-20260904-223833"
+
+          if (!(Test-Path $root)) {
+            throw "CONNY-WINDOWS-V13-20260904-223833 source directory is missing from the repository."
+          }
+
+          if (!(Test-Path "$root\windows_entry.py")) {
+            throw "windows_entry.py is missing."
+          }
+
+          if (!(Test-Path "$root\CONNY-WINDOWS.spec")) {
+            throw "CONNY-WINDOWS.spec is missing."
+          }
+
+          if (!(Test-Path "$root\requirements-windows.txt")) {
+            throw "requirements-windows.txt is missing."
+          }
+
+          Write-Host "Windows source:"
+          Write-Host $root
+
+      - name: Create Windows virtual environment
+        shell: pwsh
+        run: |
+          $root = Join-Path $env:GITHUB_WORKSPACE "CONNY-WINDOWS-V13-20260904-223833"
+
+          Set-Location $root
+
+          py -3.12 -m venv .venv
+
+          .\.venv\Scripts\python.exe -m pip install --upgrade pip
+          .\.venv\Scripts\python.exe -m pip install -r requirements-windows.txt
+
+      - name: Build CONNY AI
+        shell: pwsh
+        run: |
+          $root = Join-Path $env:GITHUB_WORKSPACE "CONNY-WINDOWS-V13-20260904-223833"
+
+          Set-Location $root
+
+          .\.venv\Scripts\python.exe -m PyInstaller `
+            --clean `
+            --noconfirm `
+            CONNY-WINDOWS.spec
+
+      - name: Find and validate Windows EXE
+        shell: pwsh
+        run: |
+          $root = Join-Path $env:GITHUB_WORKSPACE "CONNY-WINDOWS-V13-20260904-223833"
+          $dist = Join-Path $root "dist"
+
+          Write-Host "===== DIST CONTENTS ====="
+          Get-ChildItem $dist -Recurse -Force | Format-Table FullName,Length
+
+          $exe = Get-ChildItem $dist -Recurse -File -Filter "*.exe" |
+            Where-Object { $_.FullName -notmatch "\\.venv\\" } |
+            Select-Object -First 1
+
+          if (!$exe) {
+            throw "NO WINDOWS EXE WAS CREATED."
+          }
+
+          Write-Host "Candidate:"
+          Write-Host $exe.FullName
+
+          $bytes = [System.IO.File]::ReadAllBytes($exe.FullName)
+
+          if ($bytes.Length -lt 64) {
+            throw "EXE is too small."
+          }
+
+          if ($bytes[0] -ne 0x4D -or $bytes[1] -ne 0x5A) {
+            throw "FAILED PE CHECK: file does not start with MZ."
+          }
+
+          $peOffset = [BitConverter]::ToInt32($bytes, 0x3C)
+
+          if ($peOffset -lt 0 -or ($peOffset + 4) -gt $bytes.Length) {
+            throw "Invalid PE header offset."
+          }
+
+          if (
+            $bytes[$peOffset] -ne 0x50 -or
+            $bytes[$peOffset + 1] -ne 0x45 -or
+            $bytes[$peOffset + 2] -ne 0x00 -or
+            $bytes[$peOffset + 3] -ne 0x00
+          ) {
+            throw "FAILED PE CHECK: PE signature missing."
+          }
+
+          Write-Host "PASS: VALID WINDOWS PE EXECUTABLE"
+
+          $final = Join-Path $env:GITHUB_WORKSPACE "CONNY-AI-V13-Windows.exe"
+
+          Copy-Item $exe.FullName $final -Force
+
+          Write-Host "Final EXE:"
+          Get-Item $final | Format-List FullName,Length
+
+      - name: Upload Windows artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: CONNY-AI-V13-Windows
+          path: CONNY-AI-V13-Windows.exe
+
+      - name: Upload EXE to V13 GitHub release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release upload `
+            v13.0.0 `
+            "$env:GITHUB_WORKSPACE\CONNY-AI-V13-Windows.exe" `
+            --repo "${{ github.repository }}" `
+            --clobber
+
+          Write-Host "Windows EXE uploaded to release v13.0.0"
