@@ -1,0 +1,91 @@
+from __future__ import annotations
+
+import threading
+from typing import Optional
+
+from .tts import ConnyTTS
+
+import speech_recognition as sr
+
+
+class ConnyVoiceEngine:
+    """
+    CONNY AI V13 voice layer.
+
+    Microphone:
+        microphone → speech recognition → text
+
+    Speaker:
+        text → espeak-ng → audio
+
+    This module contains no Brain logic.
+    """
+
+    def __init__(self):
+        self.recognizer = sr.Recognizer()
+        self.microphone = None
+        self._speak_lock = threading.Lock()
+        self._tts = ConnyTTS()
+
+        try:
+            self.microphone = sr.Microphone()
+        except Exception:
+            self.microphone = None
+
+    @property
+    def microphone_available(self) -> bool:
+        return self.microphone is not None
+
+    def listen(self, timeout: Optional[float] = 5) -> str:
+        if self.microphone is None:
+            raise RuntimeError("No microphone is available.")
+
+        with self.microphone as source:
+            self.recognizer.adjust_for_ambient_noise(
+                source,
+                duration=0.4,
+            )
+
+            audio = self.recognizer.listen(
+                source,
+                timeout=timeout,
+                phrase_time_limit=15,
+            )
+
+        try:
+            return self.recognizer.recognize_google(audio)
+
+        except sr.UnknownValueError:
+            return ""
+
+        except sr.RequestError as exc:
+            raise RuntimeError(
+                f"Speech recognition service unavailable: {exc}"
+            ) from exc
+
+    def speak(self, text: str) -> None:
+        if not text:
+            return
+
+        text = str(text).strip()
+
+        if not text:
+            return
+
+        with self._speak_lock:
+            self._tts.speak(text)
+
+    def listen_and_process(self, handler) -> str:
+        text = self.listen()
+
+        if not text:
+            return ""
+
+        response = handler(text)
+
+        if response:
+            # V13: recognition returns text; playback is manual.
+            # Automatic TTS intentionally disabled here.
+            pass
+
+        return response

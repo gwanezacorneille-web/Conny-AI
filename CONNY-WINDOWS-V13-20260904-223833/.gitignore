@@ -1,0 +1,8 @@
+
+# Windows V13 local build artifacts
+.venv/
+build/
+dist/
+__pycache__/
+*.pyc
+*.pyo

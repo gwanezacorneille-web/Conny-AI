@@ -1,0 +1,235 @@
+import re
+from html import unescape
+from typing import Optional, Dict, List
+from urllib.parse import quote, urljoin
+
+import requests
+
+from .answer_engine import answer_from_sources
+
+
+TIMEOUT = 8
+
+HEADERS = {
+    "User-Agent": (
+        "Mozilla/5.0 (X11; Linux x86_64) "
+        "AppleWebKit/537.36 Chrome/151 Safari/537.36"
+    )
+}
+
+
+def is_local_request(text: str) -> bool:
+    q = (text or "").lower()
+
+    local_markers = [
+        "my laptop",
+        "my computer",
+        "this computer",
+        "this laptop",
+        "my pc",
+        "my system",
+        "my linux",
+        "linux command",
+        "terminal command",
+        "open terminal",
+        "close terminal",
+        "battery",
+        "ram",
+        "ssd",
+        "hdd",
+        "disk",
+        "storage",
+        "wifi adapter",
+        "bluetooth",
+        "microphone",
+        "speaker",
+        "camera",
+        "screen",
+        "display",
+        "arduino",
+        "gpio",
+        "serial port",
+        "usb device",
+        "file permission",
+        "chmod",
+        "systemctl",
+        "apt install",
+        "python environment",
+        "virtual environment",
+    ]
+
+    return any(marker in q for marker in local_markers)
+
+
+def _strip_html(html: str) -> str:
+    html = re.sub(
+        r"(?is)<(script|style|noscript|svg|nav|footer|header|form|aside).*?>.*?</\1>",
+        " ",
+        html,
+    )
+
+    html = re.sub(r"(?is)<[^>]+>", " ", html)
+
+    html = unescape(html)
+
+    html = re.sub(r"\s+", " ", html)
+
+    return html.strip()
+
+
+def _search_duckduckgo(query: str) -> List[Dict]:
+    results = []
+
+    endpoints = [
+        "https://html.duckduckgo.com/html/?q=",
+        "https://lite.duckduckgo.com/lite/?q=",
+    ]
+
+    for endpoint in endpoints:
+        try:
+            url = endpoint + quote(query)
+
+            response = requests.get(
+                url,
+                headers=HEADERS,
+                timeout=TIMEOUT,
+            )
+
+            if response.status_code != 200:
+                continue
+
+            html = response.text
+
+            blocks = re.findall(
+                r'(?is)<a[^>]+class="[^"]*(?:result__a|result-link)[^"]*"[^>]*>(.*?)</a>',
+                html,
+            )
+
+            links = re.findall(
+                r'(?is)<a[^>]+href="([^"]+)"[^>]*class="[^"]*(?:result__a|result-link)[^"]*"',
+                html,
+            )
+
+            snippets = re.findall(
+                r'(?is)(?:result__snippet|result-snippet)[^>]*>(.*?)</',
+                html,
+            )
+
+            for i, title_html in enumerate(blocks[:6]):
+                title = _strip_html(title_html)
+
+                if not title:
+                    continue
+
+                url_value = links[i] if i < len(links) else ""
+
+                if url_value.startswith("//"):
+                    url_value = "https:" + url_value
+
+                snippet = (
+                    _strip_html(snippets[i])
+                    if i < len(snippets)
+                    else ""
+                )
+
+                results.append(
+                    {
+                        "title": title,
+                        "url": url_value,
+                        "snippet": snippet,
+                    }
+                )
+
+            if results:
+                break
+
+        except Exception:
+            continue
+
+    return results
+
+
+def _fetch_page(url: str) -> str:
+    if not url.startswith(("http://", "https://")):
+        return ""
+
+    try:
+        response = requests.get(
+            url,
+            headers=HEADERS,
+            timeout=TIMEOUT,
+        )
+
+        if response.status_code != 200:
+            return ""
+
+        text = _strip_html(response.text)
+
+        # Keep useful page content without allowing giant navigation dumps.
+        return text[:18000]
+
+    except Exception:
+        return ""
+
+
+def answer_online(
+    question: str,
+    context: Optional[str] = None,
+) -> Optional[str]:
+
+    results = _search_duckduckgo(question)
+
+    if not results:
+        return None
+
+    sources = []
+
+    for result in results[:5]:
+        text = _fetch_page(result.get("url", ""))
+
+        if text:
+            sources.append(
+                {
+                    "title": result.get("title", ""),
+                    "url": result.get("url", ""),
+                    "snippet": result.get("snippet", ""),
+                    "text": text,
+                }
+            )
+        else:
+            # Search snippets are evidence, but are never displayed raw.
+            sources.append(
+                {
+                    "title": result.get("title", ""),
+                    "url": result.get("url", ""),
+                    "snippet": result.get("snippet", ""),
+                    "text": result.get("snippet", ""),
+                }
+            )
+
+    answer = answer_from_sources(
+        question,
+        sources,
+        context=context,
+    )
+
+    if not answer:
+        return None
+
+    # Safety guard: never expose raw search-result blocks by accident.
+    forbidden_markers = [
+        "Here are the top results I found online",
+        "1. http://",
+        "1. https://",
+        "[http://",
+        "[https://",
+    ]
+
+    for marker in forbidden_markers:
+        answer = answer.replace(marker, "")
+
+    return answer.strip()
+
+
+def get_online_answer(question: str, context=None):
+    return answer_online(question, context)
