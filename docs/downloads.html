@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Download CONNY AI</title>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: Arial, Helvetica, sans-serif;
+    background:
+        radial-gradient(circle at 15% 20%, rgba(90,90,90,.30), transparent 35%),
+        radial-gradient(circle at 85% 80%, rgba(50,50,50,.30), transparent 35%),
+        #070707;
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 30px;
+}
+
+.container {
+    width: 1100px;
+    max-width: 100%;
+    text-align: center;
+}
+
+.logo {
+    font-size: clamp(42px, 7vw, 72px);
+    font-weight: 900;
+    letter-spacing: 5px;
+}
+
+.subtitle {
+    margin-top: 10px;
+    margin-bottom: 45px;
+    color: #aaa;
+    font-size: 19px;
+}
+
+.downloads {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 25px;
+}
+
+.card {
+    background: rgba(24,24,24,.94);
+    border: 1px solid #333;
+    border-radius: 24px;
+    padding: 35px 25px;
+    box-shadow: 0 15px 45px rgba(0,0,0,.4);
+}
+
+.icon {
+    font-size: 52px;
+}
+
+.card h2 {
+    margin: 18px 0 8px;
+}
+
+.card p {
+    color: #999;
+    min-height: 44px;
+}
+
+.download {
+    display: inline-block;
+    margin-top: 20px;
+    padding: 14px 30px;
+    border-radius: 12px;
+    background: #fff;
+    color: #000;
+    text-decoration: none;
+    font-weight: 800;
+    transition: transform .2s, opacity .2s;
+}
+
+.download:hover {
+    transform: translateY(-3px);
+    opacity: .85;
+}
+
+.version {
+    margin-top: 38px;
+    color: #666;
+    font-size: 14px;
+}
+
+@media (max-width: 800px) {
+    .downloads {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <div class="logo">CONNY AI</div>
+
+    <div class="subtitle">
+        Your AI. Everywhere.
+    </div>
+
+    <div class="downloads">
+
+        <div class="card">
+            <div class="icon">🪟</div>
+            <h2>Windows</h2>
+            <p>CONNY AI V13 Desktop</p>
+            <a class="download" href="https://github.com/gwanezacorneille-web/Conny-AI/releases/download/v13.0.0/CONNY-AI-V13-Windows.exe">
+                DOWNLOAD
+            </a>
+        </div>
+
+        <div class="card">
+            <div class="icon">🐧</div>
+            <h2>Linux</h2>
+            <p>CONNY AI V13 Desktop</p>
+            <a class="download" href="https://github.com/gwanezacorneille-web/Conny-AI/releases/download/v13.0.0/CONNY-AI-V13.deb">
+                DOWNLOAD
+            </a>
+        </div>
+
+        <div class="card">
+            <div class="icon">📱</div>
+            <h2>Android</h2>
+            <p>CONNY AI V13 Mobile</p>
+            <a class="download" href="https://github.com/gwanezacorneille-web/Conny-AI/releases/download/v13.0.0/CONNY-AI-V13.apk">
+                DOWNLOAD APK
+            </a>
+        </div>
+
+    </div>
+
+    <div class="version">
+        CONNY AI V13 • Official Release • Free
+    </div>
+
+</div>
+
+</body>
+</html>
