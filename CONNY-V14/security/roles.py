@@ -8,6 +8,9 @@ ROLE_PERMISSIONS = {
         "memory.write",
         "memory.delete",
         "memory.sync",
+        "settings.reset",
+        "settings.write",
+        "settings.read",
     },
 
     AccountType.PRIVATE: {
@@ -16,6 +19,9 @@ ROLE_PERMISSIONS = {
         "memory.write",
         "memory.delete",
         "memory.sync",
+        "settings.reset",
+        "settings.write",
+        "settings.read",
     },
 
     AccountType.VIP: {
@@ -24,6 +30,9 @@ ROLE_PERMISSIONS = {
         "memory.write",
         "memory.delete",
         "memory.sync",
+        "settings.reset",
+        "settings.write",
+        "settings.read",
         "vip",
     },
 }
