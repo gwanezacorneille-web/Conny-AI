@@ -1,4 +1,5 @@
 from __future__ import annotations
+import sqlite3
 
 import os
 import sys
@@ -31,10 +32,6 @@ ACCOUNT_DB = DATA_DIR / "accounts.db"
 SESSION_DB = DATA_DIR / "sessions.db"
 
 accounts = AccountStore(ACCOUNT_DB)
-production_db = ProductionDatabase(ACCOUNT_DB)
-production_db = ProductionDatabase(ACCOUNT_DB)
-production_db = ProductionDatabase(ACCOUNT_DB)
-production_db = ProductionDatabase(ACCOUNT_DB)
 production_db = ProductionDatabase(ACCOUNT_DB)
 sessions = PersistentSessionStore(SESSION_DB)
 sync_store = ClientSyncStore(DATA_DIR / "cloud.db")
@@ -120,10 +117,20 @@ def register(request: RegisterRequest):
             username,
             request.password,
         )
+    except sqlite3.IntegrityError as exc:
+        if "UNIQUE constraint failed" in str(exc):
+            raise HTTPException(
+                409,
+                "Username is already registered",
+            )
+        raise HTTPException(
+            500,
+            "Account registration failed",
+        )
     except Exception:
         raise HTTPException(
-            409,
-            "Username is already registered",
+            500,
+            "Account registration failed",
         )
 
     row = accounts.authenticate_private(
