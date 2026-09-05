@@ -118,6 +118,10 @@ def register(request: RegisterRequest):
             request.password,
         )
     except sqlite3.IntegrityError as exc:
+        print(
+            f"V14 REGISTRATION SQLITE ERROR: {type(exc).__name__}: {exc}",
+            file=sys.stderr,
+        )
         if "UNIQUE constraint failed" in str(exc):
             raise HTTPException(
                 409,
@@ -127,7 +131,11 @@ def register(request: RegisterRequest):
             500,
             "Account registration failed",
         )
-    except Exception:
+    except Exception as exc:
+        print(
+            f"V14 REGISTRATION ERROR: {type(exc).__name__}: {exc}",
+            file=sys.stderr,
+        )
         raise HTTPException(
             500,
             "Account registration failed",
