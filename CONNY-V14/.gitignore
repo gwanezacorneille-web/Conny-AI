@@ -8,3 +8,4 @@ __pycache__/
 .env.*
 !.env.example
 config/vip.env
+*.log
