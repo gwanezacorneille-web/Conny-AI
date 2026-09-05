@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: conny-ai-v14-api
+    runtime: python
+    rootDir: CONNY-V14
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn api.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/health
+    envVars:
+      - key: CONNY_VIP_USERNAME
+        sync: false
+      - key: CONNY_VIP_SECRET
+        sync: false

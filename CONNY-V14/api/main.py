@@ -19,6 +19,8 @@ from account.database.store import AccountStore
 from account.models import AccountType
 
 from api.session_store import PersistentSessionStore
+from production.database import ProductionDatabase
+from cloud.api import ClientSyncStore
 from api.chat import authenticated_chat
 
 
@@ -29,11 +31,17 @@ ACCOUNT_DB = DATA_DIR / "accounts.db"
 SESSION_DB = DATA_DIR / "sessions.db"
 
 accounts = AccountStore(ACCOUNT_DB)
+production_db = ProductionDatabase(ACCOUNT_DB)
+production_db = ProductionDatabase(ACCOUNT_DB)
+production_db = ProductionDatabase(ACCOUNT_DB)
+production_db = ProductionDatabase(ACCOUNT_DB)
+production_db = ProductionDatabase(ACCOUNT_DB)
 sessions = PersistentSessionStore(SESSION_DB)
+sync_store = ClientSyncStore(DATA_DIR / "cloud.db")
 
 app = FastAPI(
     title="CONNY AI V14 API",
-    version="14.15.0",
+    version="14.16.0",
 )
 
 app.add_middleware(
@@ -93,7 +101,7 @@ def health():
         "status": "ok",
         "brain": "v14",
         "auth": "online",
-        "version": "14.15.0",
+        "version": "14.16.0",
     }
 
 
@@ -301,3 +309,87 @@ def chat(
         session,
         request.message,
     )
+
+
+@app.get("/api/production/health")
+def production_health():
+    return {
+        "status": "ok" if production_db.health() else "error",
+        "database": "sqlite-wal",
+        "sessions": "persistent",
+        "version": "14.16.0",
+    }
+
+
+class SyncPushRequest(BaseModel):
+    memory_id: str
+    content: str
+    version: int = 1
+    deleted: bool = False
+
+
+@app.post("/sync/push")
+def sync_push(
+    request: SyncPushRequest,
+    authorization: str | None = Header(default=None),
+    x_conny_token: str | None = Header(default=None),
+):
+    token = get_token(
+        authorization,
+        x_conny_token,
+    )
+
+    session = sessions.validate(token)
+
+    if session is None:
+        raise HTTPException(
+            401,
+            "Valid V14 authentication required",
+        )
+
+    return sync_store.push(
+        session.user_id,
+        request.memory_id,
+        request.content,
+        request.version,
+        request.deleted,
+    )
+
+
+@app.get("/sync/pull")
+def sync_pull(
+    cursor: float = 0,
+    authorization: str | None = Header(default=None),
+    x_conny_token: str | None = Header(default=None),
+):
+    token = get_token(
+        authorization,
+        x_conny_token,
+    )
+
+    session = sessions.validate(token)
+
+    if session is None:
+        raise HTTPException(
+            401,
+            "Valid V14 authentication required",
+        )
+
+    records = sync_store.pull(
+        session.user_id,
+        cursor,
+    )
+
+    next_cursor = cursor
+
+    if records:
+        next_cursor = max(
+            float(record["updated_at"])
+            for record in records
+        )
+
+    return {
+        "success": True,
+        "records": records,
+        "cursor": next_cursor,
+    }
