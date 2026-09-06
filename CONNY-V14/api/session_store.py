@@ -24,7 +24,10 @@ class PersistentSessionStore:
         self.database_path.parent.mkdir(parents=True, exist_ok=True)
         self.lifetime_seconds = lifetime_hours * 3600
 
-        self.connection = sqlite3.connect(self.database_path)
+        self.connection = sqlite3.connect(
+            self.database_path,
+            check_same_thread=False,
+        )
         self.connection.row_factory = sqlite3.Row
         self.initialize()
 
