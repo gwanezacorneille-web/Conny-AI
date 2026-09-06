@@ -9,7 +9,7 @@ class FinalV14GateTests(unittest.TestCase):
 
     def test_version(self):
         version = (ROOT / "VERSION").read_text().strip()
-        self.assertEqual(version, "14.14.0")
+        self.assertEqual(version, "14.16.0")
 
     def test_required_components(self):
         required = [
