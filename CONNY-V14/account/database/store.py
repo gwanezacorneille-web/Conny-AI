@@ -1,11 +1,15 @@
-import sqlite3
+from __future__ import annotations
+
 import uuid
 from pathlib import Path
+
 
 from account.security.passwords import (
     hash_password,
     verify_password,
 )
+
+from database_backend import connect, execute
 
 
 class AccountStore:
@@ -13,22 +17,18 @@ class AccountStore:
     def __init__(self, database_path):
         self.database_path = Path(database_path)
 
-        self.database_path.parent.mkdir(
-            parents=True,
-            exist_ok=True,
-        )
+        if not self.database_path.parent.exists():
+            self.database_path.parent.mkdir(
+                parents=True,
+                exist_ok=True,
+            )
 
-        self.connection = sqlite3.connect(
-            self.database_path,
-            check_same_thread=False,
-        )
-
-        self.connection.row_factory = sqlite3.Row
-
+        self.connection = connect(self.database_path)
         self.initialize()
 
     def initialize(self):
-        self.connection.execute(
+        execute(
+            self.connection,
             """
             CREATE TABLE IF NOT EXISTS accounts (
                 user_id TEXT PRIMARY KEY,
@@ -38,13 +38,11 @@ class AccountStore:
                 is_active INTEGER NOT NULL DEFAULT 1,
                 created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
             )
-            """
+            """,
         )
-
         self.connection.commit()
 
     def create_private(self, username, password):
-
         username = username.strip()
 
         if not username:
@@ -52,7 +50,8 @@ class AccountStore:
 
         user_id = str(uuid.uuid4())
 
-        self.connection.execute(
+        execute(
+            self.connection,
             """
             INSERT INTO accounts
             (user_id, username, password_hash, account_type)
@@ -74,8 +73,8 @@ class AccountStore:
         username,
         password,
     ):
-
-        row = self.connection.execute(
+        row = execute(
+            self.connection,
             """
             SELECT *
             FROM accounts

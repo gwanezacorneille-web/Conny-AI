@@ -1,7 +1,10 @@
-import sqlite3
+from __future__ import annotations
+
 import uuid
-from pathlib import Path
 from datetime import datetime, timezone
+from pathlib import Path
+
+from database_backend import connect, execute
 
 
 class MemoryStore:
@@ -10,13 +13,14 @@ class MemoryStore:
         self.database_path = Path(database_path)
         self.database_path.parent.mkdir(parents=True, exist_ok=True)
 
-        self.connection = sqlite3.connect(self.database_path)
-        self.connection.row_factory = sqlite3.Row
+        self.connection = connect(self.database_path)
 
         self.initialize()
 
     def initialize(self):
-        self.connection.execute("""
+        execute(
+            self.connection,
+            """
             CREATE TABLE IF NOT EXISTS memories (
                 memory_id TEXT PRIMARY KEY,
                 user_id TEXT NOT NULL,
@@ -24,12 +28,16 @@ class MemoryStore:
                 content TEXT NOT NULL,
                 created_at TEXT NOT NULL
             )
-        """)
+            """,
+        )
 
-        self.connection.execute("""
+        execute(
+            self.connection,
+            """
             CREATE INDEX IF NOT EXISTS idx_memories_user
             ON memories(user_id)
-        """)
+            """,
+        )
 
         self.connection.commit()
 
@@ -55,7 +63,9 @@ class MemoryStore:
             timezone.utc
         ).isoformat()
 
-        self.connection.execute("""
+        execute(
+            self.connection,
+            """
             INSERT INTO memories
             (
                 memory_id,
@@ -65,13 +75,15 @@ class MemoryStore:
                 created_at
             )
             VALUES (?, ?, ?, ?, ?)
-        """, (
-            memory_id,
-            user_id,
-            account_type,
-            content,
-            created_at,
-        ))
+            """,
+            (
+                memory_id,
+                user_id,
+                account_type,
+                content,
+                created_at,
+            ),
+        )
 
         self.connection.commit()
 
@@ -85,25 +97,33 @@ class MemoryStore:
 
     def list_for_user(self, user_id):
 
-        rows = self.connection.execute("""
+        rows = execute(
+            self.connection,
+            """
             SELECT *
             FROM memories
             WHERE user_id = ?
             ORDER BY created_at ASC
-        """, (user_id,)).fetchall()
+            """,
+            (user_id,),
+        ).fetchall()
 
         return [dict(row) for row in rows]
 
     def delete_for_user(self, user_id, memory_id):
 
-        result = self.connection.execute("""
+        result = execute(
+            self.connection,
+            """
             DELETE FROM memories
             WHERE memory_id = ?
             AND user_id = ?
-        """, (
-            memory_id,
-            user_id,
-        ))
+            """,
+            (
+                memory_id,
+                user_id,
+            ),
+        )
 
         self.connection.commit()
 

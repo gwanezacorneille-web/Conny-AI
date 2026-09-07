@@ -1,6 +1,7 @@
-import sqlite3
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Dict, Optional
+
+from database_backend import connect, execute
 
 
 class SettingsStore:
@@ -14,11 +15,12 @@ class SettingsStore:
         self._initialize()
 
     def _connect(self):
-        return sqlite3.connect(self.path)
+        return connect(self.path)
 
     def _initialize(self):
         with self._connect() as conn:
-            conn.execute(
+            execute(
+                conn,
                 """
                 CREATE TABLE IF NOT EXISTS settings (
                     user_id TEXT NOT NULL,
@@ -37,7 +39,8 @@ class SettingsStore:
         key: str,
     ) -> Optional[Dict[str, str]]:
         with self._connect() as conn:
-            row = conn.execute(
+            row = execute(
+                conn,
                 """
                 SELECT user_id, key, value, value_type
                 FROM settings
@@ -50,10 +53,10 @@ class SettingsStore:
             return None
 
         return {
-            "user_id": row[0],
-            "key": row[1],
-            "value": row[2],
-            "value_type": row[3],
+            "user_id": row["user_id"],
+            "key": row["key"],
+            "value": row["value"],
+            "value_type": row["value_type"],
         }
 
     def list_for_user(
@@ -61,7 +64,8 @@ class SettingsStore:
         user_id: str,
     ) -> Dict[str, Dict[str, str]]:
         with self._connect() as conn:
-            rows = conn.execute(
+            rows = execute(
+                conn,
                 """
                 SELECT key, value, value_type
                 FROM settings
@@ -72,9 +76,9 @@ class SettingsStore:
             ).fetchall()
 
         return {
-            row[0]: {
-                "value": row[1],
-                "value_type": row[2],
+            row["key"]: {
+                "value": row["value"],
+                "value_type": row["value_type"],
             }
             for row in rows
         }
@@ -87,7 +91,8 @@ class SettingsStore:
         value_type: str,
     ):
         with self._connect() as conn:
-            conn.execute(
+            execute(
+                conn,
                 """
                 INSERT INTO settings
                     (user_id, key, value, value_type)
@@ -112,7 +117,8 @@ class SettingsStore:
         key: str,
     ):
         with self._connect() as conn:
-            conn.execute(
+            execute(
+                conn,
                 """
                 DELETE FROM settings
                 WHERE user_id = ? AND key = ?

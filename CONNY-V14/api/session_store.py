@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 import secrets
-import sqlite3
 import time
 from dataclasses import dataclass
 from pathlib import Path
+
+from database_backend import connect, execute
 
 
 @dataclass(frozen=True)
@@ -24,15 +25,12 @@ class PersistentSessionStore:
         self.database_path.parent.mkdir(parents=True, exist_ok=True)
         self.lifetime_seconds = lifetime_hours * 3600
 
-        self.connection = sqlite3.connect(
-            self.database_path,
-            check_same_thread=False,
-        )
-        self.connection.row_factory = sqlite3.Row
+        self.connection = connect(self.database_path)
         self.initialize()
 
     def initialize(self):
-        self.connection.execute(
+        execute(
+            self.connection,
             """
             CREATE TABLE IF NOT EXISTS auth_sessions (
                 token TEXT PRIMARY KEY,
@@ -52,7 +50,8 @@ class PersistentSessionStore:
         expires = now + self.lifetime_seconds
         token = secrets.token_urlsafe(48)
 
-        self.connection.execute(
+        execute(
+            self.connection,
             """
             INSERT INTO auth_sessions
             (token, user_id, username, account_type, created_at, expires_at, active)
@@ -76,7 +75,8 @@ class PersistentSessionStore:
         if not token:
             return None
 
-        row = self.connection.execute(
+        row = execute(
+            self.connection,
             """
             SELECT *
             FROM auth_sessions
@@ -104,7 +104,8 @@ class PersistentSessionStore:
         )
 
     def revoke(self, token: str):
-        cursor = self.connection.execute(
+        cursor = execute(
+            self.connection,
             """
             UPDATE auth_sessions
             SET active = 0
@@ -116,7 +117,8 @@ class PersistentSessionStore:
         return cursor.rowcount > 0
 
     def cleanup(self):
-        self.connection.execute(
+        execute(
+            self.connection,
             """
             DELETE FROM auth_sessions
             WHERE expires_at <= ?

@@ -1,9 +1,10 @@
 from __future__ import annotations
 
-import sqlite3
 import time
 import uuid
 from pathlib import Path
+
+from database_backend import connect, execute
 
 
 class ClientSyncStore:
@@ -15,16 +16,12 @@ class ClientSyncStore:
             exist_ok=True,
         )
 
-        self.connection = sqlite3.connect(
-            self.database_path,
-            check_same_thread=False,
-        )
-
-        self.connection.row_factory = sqlite3.Row
+        self.connection = connect(self.database_path)
         self.initialize()
 
     def initialize(self):
-        self.connection.execute(
+        execute(
+            self.connection,
             """
             CREATE TABLE IF NOT EXISTS cloud_memory (
                 sync_id TEXT PRIMARY KEY,
@@ -38,7 +35,8 @@ class ClientSyncStore:
             """
         )
 
-        self.connection.execute(
+        execute(
+            self.connection,
             """
             CREATE INDEX IF NOT EXISTS
             idx_cloud_memory_user
@@ -58,7 +56,8 @@ class ClientSyncStore:
     ):
         now = time.time()
 
-        existing = self.connection.execute(
+        existing = execute(
+            self.connection,
             """
             SELECT version
             FROM cloud_memory
@@ -74,7 +73,8 @@ class ClientSyncStore:
                 int(version),
             )
 
-            self.connection.execute(
+            execute(
+                self.connection,
                 """
                 UPDATE cloud_memory
                 SET content = ?,
@@ -97,7 +97,8 @@ class ClientSyncStore:
         else:
             sync_id = str(uuid.uuid4())
 
-            self.connection.execute(
+            execute(
+                self.connection,
                 """
                 INSERT INTO cloud_memory
                 (
@@ -130,7 +131,8 @@ class ClientSyncStore:
         }
 
     def pull(self, user_id, cursor=0):
-        rows = self.connection.execute(
+        rows = execute(
+            self.connection,
             """
             SELECT
                 sync_id,

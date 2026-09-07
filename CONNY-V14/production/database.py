@@ -1,45 +1,61 @@
 from __future__ import annotations
 
-import sqlite3
 from pathlib import Path
+
+from database_backend import connect, execute, using_postgres
 
 
 class ProductionDatabase:
     """
-    Production-safe SQLite initialization.
+    V14 production database health wrapper.
 
-    SQLite remains the default local/single-service database.
-    WAL mode improves concurrent read behavior and reduces
-    reader/writer blocking.
+    PostgreSQL is used when DATABASE_URL is configured.
+    SQLite WAL remains the local fallback.
     """
 
     def __init__(self, database_path: str | Path):
         self.database_path = Path(database_path)
-        self.database_path.parent.mkdir(
-            parents=True,
-            exist_ok=True,
+
+        if not self.database_path.parent.exists():
+            self.database_path.parent.mkdir(
+                parents=True,
+                exist_ok=True,
+            )
+
+        self.connection = connect(self.database_path)
+
+        if not using_postgres():
+            self.configure_sqlite()
+
+    @property
+    def backend(self) -> str:
+        if using_postgres():
+            return "postgresql"
+
+        return "sqlite-wal"
+
+    def configure_sqlite(self):
+        self.connection.execute(
+            "PRAGMA journal_mode=WAL"
         )
-
-        self.connection = sqlite3.connect(
-            self.database_path,
-            check_same_thread=False,
+        self.connection.execute(
+            "PRAGMA foreign_keys=ON"
         )
-
-        self.connection.row_factory = sqlite3.Row
-        self.configure()
-
-    def configure(self):
-        self.connection.execute("PRAGMA journal_mode=WAL")
-        self.connection.execute("PRAGMA foreign_keys=ON")
-        self.connection.execute("PRAGMA busy_timeout=5000")
+        self.connection.execute(
+            "PRAGMA busy_timeout=5000"
+        )
         self.connection.commit()
 
     def health(self):
-        row = self.connection.execute(
-            "SELECT 1 AS ok"
+        row = execute(
+            self.connection,
+            "SELECT 1 AS ok",
         ).fetchone()
 
-        return bool(row and row["ok"] == 1)
+        if not row:
+            return False
+
+        return row["ok"] == 1
 
     def close(self):
         self.connection.close()

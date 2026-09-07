@@ -1,6 +1,4 @@
 from __future__ import annotations
-import sqlite3
-
 import os
 import sys
 import uuid
@@ -17,6 +15,7 @@ if str(V14_ROOT) not in sys.path:
     sys.path.insert(0, str(V14_ROOT))
 
 from account.database.store import AccountStore
+from database_backend import is_integrity_error
 from account.models import AccountType
 
 from api.session_store import PersistentSessionStore
@@ -117,21 +116,30 @@ def register(request: RegisterRequest):
             username,
             request.password,
         )
-    except sqlite3.IntegrityError as exc:
-        print(
-            f"V14 REGISTRATION SQLITE ERROR: {type(exc).__name__}: {exc}",
-            file=sys.stderr,
-        )
-        if "UNIQUE constraint failed" in str(exc):
-            raise HTTPException(
-                409,
-                "Username is already registered",
-            )
-        raise HTTPException(
-            500,
-            "Account registration failed",
-        )
     except Exception as exc:
+        if is_integrity_error(exc):
+            print(
+                f"V14 REGISTRATION DATABASE INTEGRITY ERROR: "
+                f"{type(exc).__name__}: {exc}",
+                file=sys.stderr,
+            )
+
+            error_text = str(exc).lower()
+
+            if (
+                "unique constraint" in error_text
+                or "duplicate key" in error_text
+                or "unique violation" in error_text
+            ):
+                raise HTTPException(
+                    409,
+                    "Username is already registered",
+                )
+
+            raise HTTPException(
+                500,
+                "Account registration failed",
+            )
         print(
             f"V14 REGISTRATION ERROR: {type(exc).__name__}: {exc}",
             file=sys.stderr,
@@ -330,7 +338,7 @@ def chat(
 def production_health():
     return {
         "status": "ok" if production_db.health() else "error",
-        "database": "sqlite-wal",
+        "database": production_db.backend,
         "sessions": "persistent",
         "version": "14.16.0",
     }
