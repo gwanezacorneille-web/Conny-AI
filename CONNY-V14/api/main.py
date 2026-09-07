@@ -15,13 +15,22 @@ if str(V14_ROOT) not in sys.path:
     sys.path.insert(0, str(V14_ROOT))
 
 from account.database.store import AccountStore
+from account.models import Account, AccountType
 from database_backend import is_integrity_error
-from account.models import AccountType
 
 from api.session_store import PersistentSessionStore
 from production.database import ProductionDatabase
 from cloud.api import ClientSyncStore
 from api.chat import authenticated_chat
+
+from security.audit import audit, create_audit_logger
+from security.roles import has_permission
+from settings.exceptions import (
+    SettingsAuthorizationError,
+    SettingsValidationError,
+)
+from settings.service import SettingsService
+from settings.store import SettingsStore
 
 
 DATA_DIR = V14_ROOT / "data"
@@ -29,11 +38,45 @@ DATA_DIR.mkdir(parents=True, exist_ok=True)
 
 ACCOUNT_DB = DATA_DIR / "accounts.db"
 SESSION_DB = DATA_DIR / "sessions.db"
+SETTINGS_DB = DATA_DIR / "settings.db"
+SECURITY_LOG = DATA_DIR / "security.log"
 
 accounts = AccountStore(ACCOUNT_DB)
 production_db = ProductionDatabase(ACCOUNT_DB)
 sessions = PersistentSessionStore(SESSION_DB)
 sync_store = ClientSyncStore(DATA_DIR / "cloud.db")
+
+settings_store = SettingsStore(SETTINGS_DB)
+security_audit_logger = create_audit_logger(SECURITY_LOG)
+
+
+class PersistentSessionAccountAdapter:
+    def __init__(self, session_store):
+        self.session_store = session_store
+
+    def validate_session(self, token):
+        return self.session_store.validate(token)
+
+
+security_service = type(
+    "V14SecurityService",
+    (),
+    {
+        "authorize": staticmethod(
+            lambda account, permission: has_permission(account, permission)
+        )
+    },
+)()
+
+settings_service = SettingsService(
+    settings_store,
+    security_service,
+    lambda event, user_id=None: audit(
+        security_audit_logger,
+        event,
+        user_id,
+    ),
+)
 
 app = FastAPI(
     title="CONNY AI V14 API",
@@ -332,6 +375,169 @@ def chat(
         session,
         request.message,
     )
+
+
+class SettingUpdateRequest(BaseModel):
+    value: object
+
+
+def authenticated_settings_account(
+    authorization: str | None,
+    x_conny_token: str | None,
+):
+    token = get_token(
+        authorization,
+        x_conny_token,
+    )
+
+    session = sessions.validate(token)
+
+    if session is None:
+        raise HTTPException(
+            401,
+            "Valid V14 authentication required",
+        )
+
+    try:
+        account_type = AccountType(session.account_type)
+    except ValueError:
+        raise HTTPException(
+            403,
+            "Invalid account type",
+        )
+
+    return Account(
+        user_id=session.user_id,
+        account_type=account_type,
+        username=session.username,
+        is_active=session.active,
+    )
+
+
+def settings_http_error(exc):
+    if isinstance(exc, SettingsAuthorizationError):
+        return HTTPException(
+            403,
+            str(exc),
+        )
+
+    if isinstance(exc, SettingsValidationError):
+        return HTTPException(
+            400,
+            str(exc),
+        )
+
+    return HTTPException(
+        500,
+        "Settings operation failed",
+    )
+
+
+@app.get("/settings")
+def get_settings(
+    authorization: str | None = Header(default=None),
+    x_conny_token: str | None = Header(default=None),
+):
+    account = authenticated_settings_account(
+        authorization,
+        x_conny_token,
+    )
+
+    try:
+        values = settings_service.get_all(account)
+    except Exception as exc:
+        raise settings_http_error(exc)
+
+    return {
+        "success": True,
+        "user_id": account.user_id,
+        "settings": values,
+    }
+
+
+@app.get("/settings/{key}")
+def get_setting(
+    key: str,
+    authorization: str | None = Header(default=None),
+    x_conny_token: str | None = Header(default=None),
+):
+    account = authenticated_settings_account(
+        authorization,
+        x_conny_token,
+    )
+
+    try:
+        setting = settings_service.get(
+            account,
+            key,
+        )
+    except Exception as exc:
+        raise settings_http_error(exc)
+
+    return {
+        "success": True,
+        "user_id": setting.user_id,
+        "key": setting.key,
+        "value": setting.value,
+    }
+
+
+@app.put("/settings/{key}")
+def update_setting(
+    key: str,
+    request: SettingUpdateRequest,
+    authorization: str | None = Header(default=None),
+    x_conny_token: str | None = Header(default=None),
+):
+    account = authenticated_settings_account(
+        authorization,
+        x_conny_token,
+    )
+
+    try:
+        setting = settings_service.set(
+            account,
+            key,
+            request.value,
+        )
+    except Exception as exc:
+        raise settings_http_error(exc)
+
+    return {
+        "success": True,
+        "user_id": setting.user_id,
+        "key": setting.key,
+        "value": setting.value,
+        "message": "Setting updated successfully",
+    }
+
+
+@app.post("/settings/{key}/reset")
+def reset_setting(
+    key: str,
+    authorization: str | None = Header(default=None),
+    x_conny_token: str | None = Header(default=None),
+):
+    account = authenticated_settings_account(
+        authorization,
+        x_conny_token,
+    )
+
+    try:
+        setting = settings_service.reset(
+            account,
+            key,
+        )
+    except Exception as exc:
+        raise settings_http_error(exc)
+
+    return {
+        "success": True,
+        "user_id": setting.user_id,
+        "key": setting.key,
+        "value": setting.value,
+        "message": "Setting reset successfully",
+    }
 
 
 @app.get("/api/production/health")
